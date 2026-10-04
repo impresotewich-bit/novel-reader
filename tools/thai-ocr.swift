@@ -6,6 +6,7 @@
 // Usage:  thai-ocr <file.pdf | folder> [output-folder]     convert PDFs to <name>.book.json (+ <name>.cover.jpg)
 //         thai-ocr --seal <library> <books> <vault.json>   encrypt the library for the public website
 //         thai-ocr --vault <vault.json> <index.html>       new password: new salt + check value
+//         thai-ocr --token <vault.json> <index.html>       store the shared GitHub key (NOVEL_GH_TOKEN) encrypted
 // The password comes from the NOVEL_PASSWORD environment variable (the novel CLI reads it from the Keychain).
 
 import Foundation
@@ -168,7 +169,7 @@ func writeSealed(_ data: Data, to url: URL, _ key: SymmetricKey) throws {
     try seal(data, key).write(to: url)
 }
 
-struct Vault { let salt: Data; let rounds: Int; let check: Data }
+struct Vault { let salt: Data; let rounds: Int; let check: Data; var gh: Data?; var repo: String? }
 
 func readVault(_ url: URL) throws -> Vault {
     let obj = try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any] ?? [:]
@@ -176,17 +177,17 @@ func readVault(_ url: URL) throws -> Vault {
           let c = obj["check"] as? String, let check = Data(base64Encoded: c) else {
         throw NSError(domain: "vault", code: 1, userInfo: [NSLocalizedDescriptionKey: "อ่าน \(url.lastPathComponent) ไม่ได้"])
     }
-    return Vault(salt: salt, rounds: rounds, check: check)
+    return Vault(salt: salt, rounds: rounds, check: check,
+                 gh: (obj["gh"] as? String).flatMap { Data(base64Encoded: $0) }, repo: obj["repo"] as? String)
 }
 
-/// New salt + check value for a (new) password; writes vault.json and the VAULT constant in index.html.
-func makeVault(_ vaultURL: URL, page: URL) throws {
-    var salt = Data(count: 16)
-    _ = salt.withUnsafeMutableBytes { SecRandomCopyBytes(kSecRandomDefault, 16, $0.baseAddress!) }
-    let rounds = 310_000
-    let key = deriveKey(password(), salt: salt, rounds: rounds)
-    let check = try seal(Data(vaultCheckText.utf8), key)
-    let json = "{\"salt\":\"\(salt.base64EncodedString())\",\"rounds\":\(rounds),\"check\":\"\(check.base64EncodedString())\"}"
+/// vault.json and the VAULT constant in index.html carry the same public values:
+/// salt, rounds, an encrypted check string and (optionally) the encrypted shared GitHub key.
+func writeVault(_ v: Vault, _ vaultURL: URL, page: URL) throws {
+    var json = "{\"salt\":\"\(v.salt.base64EncodedString())\",\"rounds\":\(v.rounds),\"check\":\"\(v.check.base64EncodedString())\""
+    if let gh = v.gh { json += ",\"gh\":\"\(gh.base64EncodedString())\"" }
+    if let repo = v.repo { json += ",\"repo\":\"\(repo)\"" }
+    json += "}"
     try Data((json + "\n").utf8).write(to: vaultURL)
     var html = try String(contentsOf: page, encoding: .utf8)
     guard let a = html.range(of: "/*VAULT*/"), let b = html.range(of: "/*END VAULT*/", range: a.upperBound..<html.endIndex) else {
@@ -194,29 +195,84 @@ func makeVault(_ vaultURL: URL, page: URL) throws {
     }
     html.replaceSubrange(a.upperBound..<b.lowerBound, with: json)
     try html.write(to: page, atomically: true, encoding: .utf8)
+}
+
+/// The shared GitHub key (NOVEL_GH_TOKEN), encrypted with the site key — only people who know the password can use it.
+func sealedToken(_ key: SymmetricKey) throws -> Data? {
+    guard let t = ProcessInfo.processInfo.environment["NOVEL_GH_TOKEN"], !t.isEmpty else { return nil }
+    return try seal(Data(t.utf8), key)
+}
+
+/// New salt + check value for a (new) password; re-encrypts the shared GitHub key if there is one.
+func makeVault(_ vaultURL: URL, page: URL) throws {
+    var salt = Data(count: 16)
+    _ = salt.withUnsafeMutableBytes { SecRandomCopyBytes(kSecRandomDefault, 16, $0.baseAddress!) }
+    let rounds = 310_000
+    let key = deriveKey(password(), salt: salt, rounds: rounds)
+    let old = try? readVault(vaultURL)
+    let v = Vault(salt: salt, rounds: rounds, check: try seal(Data(vaultCheckText.utf8), key),
+                  gh: try sealedToken(key), repo: ProcessInfo.processInfo.environment["NOVEL_REPO"] ?? old?.repo)
+    try writeVault(v, vaultURL, page: page)
     print("✓ ตั้งรหัสใหม่แล้ว")
+}
+
+func siteKey(_ v: Vault) -> SymmetricKey {
+    let key = deriveKey(password(), salt: v.salt, rounds: v.rounds)
+    guard (try? AES.GCM.open(AES.GCM.SealedBox(combined: v.check), using: key)) == Data(vaultCheckText.utf8) else {
+        print("✗ รหัสในเครื่องไม่ตรงกับรหัสเว็บ ตั้งใหม่ด้วย ./novel password"); exit(1)
+    }
+    return key
+}
+
+/// Store the shared GitHub key in the vault (same password, same salt).
+func setToken(_ vaultURL: URL, page: URL) throws {
+    var v = try readVault(vaultURL)
+    let key = siteKey(v)
+    v.gh = try sealedToken(key)
+    v.repo = ProcessInfo.processInfo.environment["NOVEL_REPO"] ?? v.repo
+    try writeVault(v, vaultURL, page: page)
+    print(v.gh == nil ? "✓ เอากุญแจร่วมออกแล้ว" : "✓ เก็บกุญแจร่วม (เข้ารหัส) ในเว็บแล้ว")
 }
 
 func opaqueName(_ s: String) -> String {
     SHA256.hash(data: Data(s.utf8)).prefix(8).map { String(format: "%02x", $0) }.joined()
 }
 
+func readIndex(_ out: URL, _ key: SymmetricKey) -> [String: Any]? {
+    guard let sealed = try? Data(contentsOf: out.appendingPathComponent("index.enc")),
+          let plain = try? AES.GCM.open(AES.GCM.SealedBox(combined: sealed), using: key) else { return nil }
+    return try? JSONSerialization.jsonObject(with: plain) as? [String: Any]
+}
+
+let iso = ISO8601DateFormatter()
+
 /// Encrypt every library/<name>.book.json (+ cover) into books/<id>.book.enc and books/index.enc.
+/// Books added on the website are adopted into library/ first; books deleted on the website
+/// (index "removed" list) are deleted from library/ unless the local copy is newer.
 func sealLibrary(_ lib: URL, into out: URL, vaultURL: URL, drop: String? = nil) throws {
-    let v = try readVault(vaultURL)
-    let key = deriveKey(password(), salt: v.salt, rounds: v.rounds)
-    // refuse to publish with a password that doesn't match the website's
-    guard (try? AES.GCM.open(AES.GCM.SealedBox(combined: v.check), using: key)) == Data(vaultCheckText.utf8) else {
-        print("✗ รหัสในเครื่องไม่ตรงกับรหัสเว็บ ตั้งใหม่ด้วย ./novel password"); exit(1)
-    }
+    let key = siteKey(try readVault(vaultURL))
     let fm = FileManager.default
     try fm.createDirectory(at: out, withIntermediateDirectories: true)
     try fm.createDirectory(at: lib, withIntermediateDirectories: true)
-    try adoptWebBooks(lib, from: out, key: key, skip: drop.map(opaqueName))
-    let files = ((try? fm.contentsOfDirectory(at: lib, includingPropertiesForKeys: nil)) ?? [])
+    let old = readIndex(out, key)
+    var removed: [String: String] = [:]   // id -> ISO time it was deleted
+    for r in (old?["removed"] as? [[String: Any]]) ?? [] { if let id = r["id"] as? String, let at = r["at"] as? String { removed[id] = at } }
+    if let drop { removed[opaqueName(drop)] = iso.string(from: Date()) }
+    try adoptWebBooks(lib, entries: (old?["books"] as? [[String: Any]]) ?? [], from: out, key: key, skip: Set(removed.keys))
+    var files = ((try? fm.contentsOfDirectory(at: lib, includingPropertiesForKeys: [.contentModificationDateKey]) ) ?? [])
         .filter { $0.lastPathComponent.hasSuffix(".book.json") }.sorted { $0.lastPathComponent < $1.lastPathComponent }
+    // honour deletions made on other devices
+    files = files.filter { f in
+        let name = String(f.lastPathComponent.dropLast(".book.json".count)), id = opaqueName(name)
+        guard let at = removed[id].flatMap(iso.date) else { return true }
+        let mtime = (try? f.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+        if id != drop.map(opaqueName), mtime > at.addingTimeInterval(1) { removed[id] = nil; return true }   // re-added here after the deletion
+        try? fm.removeItem(at: f); try? fm.removeItem(at: lib.appendingPathComponent(name + ".cover.jpg"))
+        print("  ✗ เอาออกตามที่ลบจากเว็บ: \(name)")
+        return false
+    }
     var entries: [[String: Any]] = []
-    var keep = Set(["index.enc"])
+    var keep = Set(["index.enc", "progress.enc"])
     for f in files {
         let raw = try Data(contentsOf: f)
         guard let obj = try JSONSerialization.jsonObject(with: raw) as? [String: Any] else { continue }
@@ -231,7 +287,10 @@ func sealLibrary(_ lib: URL, into out: URL, vaultURL: URL, drop: String? = nil) 
         }
         entries.append(e)
     }
-    let index = try JSONSerialization.data(withJSONObject: ["format": "reader-shelf/2", "books": entries], options: [.withoutEscapingSlashes, .sortedKeys])
+    let live = Set(entries.compactMap { $0["id"] as? String })
+    let tomb = removed.filter { !live.contains($0.key) }.sorted { $0.key < $1.key }.map { ["id": $0.key, "at": $0.value] }
+    let index = try JSONSerialization.data(withJSONObject: ["format": "reader-shelf/2", "books": entries, "removed": tomb],
+                                           options: [.withoutEscapingSlashes, .sortedKeys])
     try writeSealed(index, to: out.appendingPathComponent("index.enc"), key)
     for f in (try? fm.contentsOfDirectory(at: out, includingPropertiesForKeys: nil)) ?? [] where !keep.contains(f.lastPathComponent) {
         try? fm.removeItem(at: f)   // books removed from the library, or old unencrypted files
@@ -240,18 +299,14 @@ func sealLibrary(_ lib: URL, into out: URL, vaultURL: URL, drop: String? = nil) 
 }
 
 /// Books uploaded from the website are only in books/ (encrypted). Copy them into library/ so they
-/// survive the next seal, which rebuilds books/ from library/.
-func adoptWebBooks(_ lib: URL, from out: URL, key: SymmetricKey, skip: String? = nil) throws {
+/// survive the seal, which rebuilds books/ from library/.
+func adoptWebBooks(_ lib: URL, entries: [[String: Any]], from out: URL, key: SymmetricKey, skip: Set<String>) throws {
     let fm = FileManager.default
-    guard let sealed = try? Data(contentsOf: out.appendingPathComponent("index.enc")),
-          let plain = try? AES.GCM.open(AES.GCM.SealedBox(combined: sealed), using: key),
-          let idx = try JSONSerialization.jsonObject(with: plain) as? [String: Any],
-          let entries = idx["books"] as? [[String: Any]] else { return }
     let local = Set(((try? fm.contentsOfDirectory(at: lib, includingPropertiesForKeys: nil)) ?? [])
         .filter { $0.lastPathComponent.hasSuffix(".book.json") }
         .map { opaqueName(String($0.lastPathComponent.dropLast(".book.json".count))) })
     for e in entries {
-        guard let id = e["id"] as? String, !local.contains(id), id != skip,
+        guard let id = e["id"] as? String, !local.contains(id), !skip.contains(id),
               let name = (e["name"] as? String)?.replacingOccurrences(of: "/", with: "-"), opaqueName(name) == id,
               let bookData = try? Data(contentsOf: out.appendingPathComponent(id + ".book.enc")),
               let book = try? AES.GCM.open(AES.GCM.SealedBox(combined: bookData), using: key) else { continue }
@@ -273,11 +328,13 @@ if args.first == "--seal" {   // --seal <library> <books> <vault.json> [--drop <
     catch { print("✗ \(error.localizedDescription)"); exit(1) }
     exit(0)
 }
-if args.first == "--vault" {  // --vault <vault.json> <index.html>
+if args.first == "--vault" || args.first == "--token" {  // --vault|--token <vault.json> <index.html>
     let a = Array(args.dropFirst())
-    guard a.count == 2 else { print("วิธีใช้: thai-ocr --vault <vault.json> <index.html>"); exit(1) }
-    do { try makeVault(URL(fileURLWithPath: a[0]), page: URL(fileURLWithPath: a[1])) }
-    catch { print("✗ \(error.localizedDescription)"); exit(1) }
+    guard a.count == 2 else { print("วิธีใช้: thai-ocr \(args.first!) <vault.json> <index.html>"); exit(1) }
+    do {
+        if args.first == "--vault" { try makeVault(URL(fileURLWithPath: a[0]), page: URL(fileURLWithPath: a[1])) }
+        else { try setToken(URL(fileURLWithPath: a[0]), page: URL(fileURLWithPath: a[1])) }
+    } catch { print("✗ \(error.localizedDescription)"); exit(1) }
     exit(0)
 }
 guard let input = args.first else {

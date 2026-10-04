@@ -7,6 +7,7 @@
 #   ./novel remove <ชื่อหนังสือ>            เอาเล่มออกจากชั้น แล้วขึ้น GitHub
 #   ./novel push                          ส่งการเปลี่ยนแปลงทั้งหมดขึ้น GitHub
 #   ./novel password                      เปลี่ยนรหัสเข้าเว็บ (เข้ารหัสหนังสือทุกเล่มใหม่)
+#   ./novel token                         ใส่กุญแจ GitHub ร่วม ให้ทุกอุปกรณ์ที่ใส่รหัสเว็บได้ เพิ่ม/ลบหนังสือได้
 #   ./novel open                          เปิดหน้าเว็บ
 #
 # หนังสือที่อ่านได้อยู่ใน library/ บนเครื่องนี้เท่านั้น ที่ขึ้น GitHub (books/) เป็นไฟล์เข้ารหัสด้วยรหัสเว็บ
@@ -21,6 +22,7 @@ LIB="library"      # readable books, never pushed
 BOOKS="books"      # encrypted copies for the website
 VAULT="tools/vault.json"
 KEYCHAIN=(-s meaw-meaw-read -a novel)
+KEYCHAIN_GH=(-s meaw-meaw-read-gh -a novel)
 mkdir -p "$LIB" "$BOOKS" "สแกน" "tools/.bin"
 
 build() {
@@ -94,14 +96,34 @@ case "$cmd" in
     [[ -z "$pw1" ]] && { echo "รหัสว่างไม่ได้"; exit 1; }
     [[ "$pw1" != "$pw2" ]] && { echo "รหัสสองครั้งไม่ตรงกัน"; exit 1; }
     security add-generic-password -U $KEYCHAIN -l "Meaw Meaw Read" -w "$pw1"
-    NOVEL_PASSWORD="$pw1" "$BIN" --vault "$VAULT" index.html
+    NOVEL_PASSWORD="$pw1" NOVEL_GH_TOKEN="$(security find-generic-password $KEYCHAIN_GH -w 2>/dev/null)" "$BIN" --vault "$VAULT" index.html
     publish "เปลี่ยนรหัสเว็บ"
+    ;;
+  token|กุญแจ)
+    build
+    repo=$(git remote get-url origin 2>/dev/null | sed -E 's#.*github\.com[:/]##; s#\.git$##')
+    [[ -z "$repo" ]] && { echo "โฟลเดอร์นี้ยังไม่ได้เชื่อม GitHub"; exit 1; }
+    echo "สร้างกุญแจที่ https://github.com/settings/personal-access-tokens/new"
+    echo "  • Repository access: Only select repositories → $repo"
+    echo "  • Permissions → Repository → Contents: Read and write"
+    echo "  • ตั้งวันหมดอายุตามสะดวก (หมดอายุแล้วรัน ./novel token ใหม่)"
+    read -rs "tok?วางกุญแจ GitHub (ไม่แสดงบนจอ, เว้นว่างเพื่อเอากุญแจร่วมออก): "; echo
+    if [[ -n "$tok" ]]; then
+      ok=$(printf 'Authorization: Bearer %s\n' "$tok" | curl -s -H @- "https://api.github.com/repos/$repo" \
+           | python3 -c 'import json,sys; print(json.load(sys.stdin).get("permissions",{}).get("push",False))' 2>/dev/null)
+      [[ "$ok" != "True" ]] && { echo "กุญแจนี้เขียน $repo ไม่ได้ ตรวจสิทธิ์ Contents: Read and write แล้วลองใหม่"; exit 1; }
+      security add-generic-password -U $KEYCHAIN_GH -l "Meaw Meaw Read GitHub" -w "$tok"
+    else
+      security delete-generic-password $KEYCHAIN_GH >/dev/null 2>&1 || true
+    fi
+    NOVEL_PASSWORD="$(site_password)" NOVEL_GH_TOKEN="$tok" NOVEL_REPO="$repo" "$BIN" --token "$VAULT" index.html
+    publish "อัปเดตกุญแจร่วมของชั้นออนไลน์"
     ;;
   open)
     url=$(gh api "repos/{owner}/{repo}/pages" --jq .html_url 2>/dev/null) || true
     if [[ -n "$url" ]]; then open "$url"; else echo "ยังไม่ได้เปิด GitHub Pages — เปิดไฟล์ index.html ในเครื่องแทน"; open index.html; fi
     ;;
   *)
-    sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'
     ;;
 esac
