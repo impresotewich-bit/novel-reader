@@ -1765,7 +1765,7 @@ Reply with the transcription only, no notes or commentary.`;
   /* ---------- password + encrypted shelf ----------
      ./novel publishes books/ as AES-256-GCM files (nonce || ciphertext || tag). The key is derived from the
      site password with PBKDF2-SHA256 using VAULT below (written by `./novel password`). */
-  let VAULT = /*VAULT*/{"salt":"yR/Iun+zC5DdmNHaekW07g==","rounds":310000,"check":"0GMmrcCWmYzfCb+fAI2q/J9vwtHRw2RyqcHmiueu9iH5Y0SWNQhOPsFy"}/*END VAULT*/;
+  let VAULT = /*VAULT*/{"salt":"yR/Iun+zC5DdmNHaekW07g==","rounds":310000,"check":"0GMmrcCWmYzfCb+fAI2q/J9vwtHRw2RyqcHmiueu9iH5Y0SWNQhOPsFy","gh":"+S7ZG9O677csx+Dd7jXFAvzv12QshlDYw8Ve7lCpvPpVlxHW/R9vrgVcfwLQ5WZ9xrPXpbCjYUMZyJzdRcJ8avn8WZsIFvYHfnAQCoGf71ZW/hFsGTqxEYzkDKaWLO6T2QWNtpLUOK4qn8zbWO1TGAmVWHUZ5mJhZQ==","repo":"impresotewich-bit/novel-reader"}/*END VAULT*/;
   const CHECK_TEXT = 'meaw meaw read';
   const KEY_STORE = 'mmr.key';
   let siteKey = null;

@@ -107,7 +107,14 @@ case "$cmd" in
     echo "  • Repository access: Only select repositories → $repo"
     echo "  • Permissions → Repository → Contents: Read and write"
     echo "  • ตั้งวันหมดอายุตามสะดวก (หมดอายุแล้วรัน ./novel token ใหม่)"
-    read -rs "tok?วางกุญแจ GitHub (ไม่แสดงบนจอ, เว้นว่างเพื่อเอากุญแจร่วมออก): "; echo
+    if [[ -n "$NOVEL_TOKEN_DIALOG" ]]; then
+      # a normal Mac pop-up with a paste box (easier than typing into Terminal)
+      tok=$(osascript -e 'text returned of (display dialog "วางกุญแจ GitHub ที่คัดลอกมา (ขึ้นต้นด้วย github_pat_) แล้วกด OK" default answer "" with hidden answer with title "Meaw Meaw Read – กุญแจร่วม" buttons {"ยกเลิก", "OK"} default button "OK" cancel button "ยกเลิก")' 2>/dev/null) || { echo "ยกเลิกแล้ว"; exit 1; }
+      tok="${tok//[[:space:]]/}"
+      [[ -z "$tok" ]] && { echo "ยังไม่ได้วางกุญแจ"; exit 1; }
+    else
+      read -rs "tok?วางกุญแจ GitHub (ไม่แสดงบนจอ, เว้นว่างเพื่อเอากุญแจร่วมออก): "; echo
+    fi
     if [[ -n "$tok" ]]; then
       ok=$(printf 'Authorization: Bearer %s\n' "$tok" | curl -s -H @- "https://api.github.com/repos/$repo" \
            | python3 -c 'import json,sys; print(json.load(sys.stdin).get("permissions",{}).get("push",False))' 2>/dev/null)
