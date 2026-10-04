@@ -175,6 +175,11 @@ button:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visi
 }
 
 /* แม่หมอ Meaw */
+@media (min-width: 721px) {   /* wide screens: photo on the left, words on the right */
+  .hero-fortune { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); }
+  .hero-fortune .hero-photo { order: -1; }
+  .hero-fortune .hero-photo::after { inset: 0 0 0 auto; background: linear-gradient(270deg, var(--surface), transparent); }
+}
 .hero-fortune .hero-photo img { object-position: 50% 40%; }
 .fortune-eyebrow { color: var(--mystic); font-weight: 600; letter-spacing: .02em; }
 .hero-fortune h2 em { color: var(--mystic); }
