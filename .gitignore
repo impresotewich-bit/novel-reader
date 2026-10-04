@@ -1,0 +1,11 @@
+# source scans stay on this Mac (large, and GitHub rejects files over 100 MB)
+*.pdf
+*.PDF
+สแกน/
+หนังสือ/
+# build output
+tools/.bin/
+# original character art (the web uses the small copies in assets/)
+Calico Kitten*.png
+ChatGPT Image*.png
+.DS_Store

@@ -1,0 +1,74 @@
+#!/bin/zsh
+# novel — ห้องอ่านหนังสือ command line
+#
+#   ./novel scan [ไฟล์.pdf … | โฟลเดอร์]   แปลง PDF (ภาพสแกนหรือไม่ก็ได้) เป็นหนังสือใน books/ แล้วขึ้น GitHub
+#                                         ไม่ระบุไฟล์ = แปลงทุกไฟล์ในโฟลเดอร์ "สแกน"
+#   ./novel list                          ดูหนังสือบนชั้น
+#   ./novel remove <ชื่อหนังสือ>            เอาเล่มออกจากชั้น แล้วขึ้น GitHub
+#   ./novel push                          ส่งการเปลี่ยนแปลงทั้งหมดขึ้น GitHub
+#   ./novel open                          เปิดหน้าเว็บชั้นหนังสือ (GitHub Pages)
+#
+# ตั้ง NOVEL_NO_PUSH=1 ถ้าไม่อยากให้ขึ้น GitHub อัตโนมัติ
+# การแปลงทำบนเครื่องนี้ทั้งหมดด้วย Apple Vision — ฟรี ไม่ใช้ claude.ai
+
+set -e
+ROOT="${0:A:h}"
+cd "$ROOT"
+BIN="tools/.bin/thai-ocr"
+BOOKS="books"
+mkdir -p "$BOOKS" "สแกน" "tools/.bin"
+
+build() {
+  if [[ ! -x "$BIN" || "tools/thai-ocr.swift" -nt "$BIN" ]]; then
+    echo "กำลังเตรียมตัวแปลง (ครั้งแรกใช้เวลาราวครึ่งนาที)…"
+    swiftc -O "tools/thai-ocr.swift" -o "$BIN" || {
+      echo "เตรียมตัวแปลงไม่สำเร็จ ต้องมี Xcode Command Line Tools:  xcode-select --install" >&2; exit 1; }
+  fi
+}
+
+publish() {   # publish "<commit message>"
+  "$BIN" --index "$BOOKS" >/dev/null
+  if [[ -n "$NOVEL_NO_PUSH" ]]; then echo "ข้ามการขึ้น GitHub (NOVEL_NO_PUSH)"; return; fi
+  if ! git rev-parse --git-dir >/dev/null 2>&1; then echo "โฟลเดอร์นี้ยังไม่ได้เชื่อม GitHub" >&2; return; fi
+  git add -A
+  if git diff --cached --quiet; then echo "ไม่มีอะไรเปลี่ยน"; return; fi
+  git commit -q -m "$1"
+  echo "กำลังส่งขึ้น GitHub…"
+  if git push -q; then echo "✓ ขึ้น GitHub แล้ว"; else echo "✗ ส่งขึ้น GitHub ไม่สำเร็จ ลองใหม่ด้วย ./novel push" >&2; fi
+}
+
+cmd="${1:-help}"; [[ $# -gt 0 ]] && shift
+case "$cmd" in
+  scan|แปลง)
+    build
+    [[ $# -eq 0 ]] && set -- "สแกน"
+    titles=()
+    for src in "$@"; do
+      if [[ -d "$src" && -z "$(ls "$src"/*.(pdf|PDF)(N) 2>/dev/null)" ]]; then echo "ไม่มีไฟล์ PDF ใน $src"; continue; fi
+      "$BIN" "$src" "$BOOKS"
+      if [[ -d "$src" ]]; then for f in "$src"/*.(pdf|PDF)(N); do titles+=("${f:t:r}"); done; else titles+=("${src:t:r}"); fi
+    done
+    (( ${#titles} )) && publish "เพิ่มหนังสือ: ${(j:, :)titles}"
+    ;;
+  list|ls)
+    build; "$BIN" --index "$BOOKS"
+    for f in "$BOOKS"/*.book.json(N); do echo "  • ${${f:t}%.book.json}"; done
+    ;;
+  remove|rm)
+    [[ -z "$1" ]] && { echo "ระบุชื่อหนังสือ เช่น ./novel remove \"ชื่อเรื่อง\""; exit 1; }
+    build
+    [[ -f "$BOOKS/$1.book.json" ]] || { echo "ไม่พบ \"$1\" บนชั้น (ดูรายชื่อด้วย ./novel list)"; exit 1; }
+    rm -f "$BOOKS/$1.book.json" "$BOOKS/$1.cover.jpg"
+    publish "เอาออกจากชั้น: $1"
+    ;;
+  push)
+    build; publish "อัปเดตชั้นหนังสือ"
+    ;;
+  open)
+    url=$(gh api "repos/{owner}/{repo}/pages" --jq .html_url 2>/dev/null) || true
+    if [[ -n "$url" ]]; then open "$url"; else echo "ยังไม่ได้เปิด GitHub Pages — เปิดไฟล์ index.html ในเครื่องแทน"; open index.html; fi
+    ;;
+  *)
+    sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'
+    ;;
+esac

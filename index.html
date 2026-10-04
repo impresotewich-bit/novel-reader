@@ -1,0 +1,1364 @@
+<meta charset="utf-8">
+<title>ห้องอ่านหนังสือ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,400;0,600;1,400&family=Noto+Serif+Thai:wght@400;600;700&family=Anuphan:wght@400;500;600&family=Mali:wght@500;600;700&display=swap">
+<style>
+/* Layout: library = cozy hero (greeting + kitten nook photo) → "continue reading" card with a peeking kitten → covers standing on wooden shelf ledges.
+   Reader = sticky toolbar + one centered reading column. Palette taken from the calico kitten: cream fur, cocoa patches, orange patches, pink paw pads, rose book. */
+:root {
+  --bg: #fcf7f1;
+  --surface: #fffdfa;
+  --fg: #4a3427;
+  --muted: #9a8270;
+  --line: #ecdfcf;
+  --accent: #e0914b;
+  --accent-ink: #b5622a;
+  --accent-soft: #fbe9d7;
+  --on-accent: #3d2518;
+  --pink: #f3b4b0;
+  --rose: #b97568;
+  --wood: #e8cba6;
+  --wood-edge: #cfa77c;
+  --spot: #fbf1e4;
+  --danger: #b3412e;
+  --shadow: 0 1px 2px rgba(90,55,30,.10), 0 8px 22px rgba(90,55,30,.10);
+  --font-ui: "Anuphan", "Sarabun", system-ui, sans-serif;
+  --font-display: "Mali", "Anuphan", system-ui, sans-serif;
+  --font-read: "Sarabun", "Thonburi", system-ui, sans-serif;
+  --read-size: 20px;
+  --read-lh: 1.85;
+  --read-width: 38em;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1f1915; --surface: #2a221d; --fg: #f1e4d4; --muted: #a8927f; --line: #3d322a;
+    --accent: #eba465; --accent-ink: #f0b37c; --accent-soft: #3b2b1f; --on-accent: #2a180c;
+    --pink: #d99894; --rose: #c98a7c; --wood: #4a3a2d; --wood-edge: #2f251c; --spot: #f6ebdd; --danger: #e8846f;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 22px rgba(0,0,0,.35); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1f1915; --surface: #2a221d; --fg: #f1e4d4; --muted: #a8927f; --line: #3d322a;
+  --accent: #eba465; --accent-ink: #f0b37c; --accent-soft: #3b2b1f; --on-accent: #2a180c;
+  --pink: #d99894; --rose: #c98a7c; --wood: #4a3a2d; --wood-edge: #2f251c; --spot: #f6ebdd; --danger: #e8846f;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 22px rgba(0,0,0,.35); color-scheme: dark;
+}
+/* Reader modes chosen inside the page win over the viewer theme */
+:root[data-mode="light"] {
+  --bg: #fcf7f1; --surface: #fffdfa; --fg: #4a3427; --muted: #9a8270; --line: #ecdfcf;
+  --accent: #e0914b; --accent-ink: #b5622a; --accent-soft: #fbe9d7; --on-accent: #3d2518;
+  --pink: #f3b4b0; --rose: #b97568; --wood: #e8cba6; --wood-edge: #cfa77c; --spot: #fbf1e4; --danger: #b3412e;
+  --shadow: 0 1px 2px rgba(90,55,30,.10), 0 8px 22px rgba(90,55,30,.10); color-scheme: light;
+}
+:root[data-mode="dark"] {
+  --bg: #1f1915; --surface: #2a221d; --fg: #f1e4d4; --muted: #a8927f; --line: #3d322a;
+  --accent: #eba465; --accent-ink: #f0b37c; --accent-soft: #3b2b1f; --on-accent: #2a180c;
+  --pink: #d99894; --rose: #c98a7c; --wood: #4a3a2d; --wood-edge: #2f251c; --spot: #f6ebdd; --danger: #e8846f;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 22px rgba(0,0,0,.35); color-scheme: dark;
+}
+:root[data-mode="sepia"] {
+  --bg: #f1e6cf; --surface: #f8efdc; --fg: #4a3b28; --muted: #8a7559; --line: #ddcca9;
+  --accent: #c98a45; --accent-ink: #9a5b22; --accent-soft: #ead9b7; --on-accent: #3a2410;
+  --pink: #e6a9a0; --rose: #a8695a; --wood: #dcc097; --wood-edge: #bf9a6c; --spot: #f8efdc; --danger: #a83a24;
+  --shadow: 0 1px 2px rgba(80,50,20,.15), 0 6px 18px rgba(80,50,20,.12); color-scheme: light;
+}
+:root[data-mode="night"] {
+  --bg: #1c1712; --surface: #26201a; --fg: #d9c7a7; --muted: #8f7f66; --line: #3a3128;
+  --accent: #d79a52; --accent-ink: #e2ad6c; --accent-soft: #3a2d1f; --on-accent: #22160a;
+  --pink: #c48c84; --rose: #b07c6c; --wood: #3f3226; --wood-edge: #2a2119; --spot: #efe2cc; --danger: #e0846a;
+  --shadow: 0 1px 2px rgba(0,0,0,.45), 0 8px 22px rgba(0,0,0,.4); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { min-height: 100%; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-ui); font-size: 15px;
+  transition: background .25s, color .25s;
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+button, .btn {
+  font: inherit; color: var(--fg); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 8px;
+  padding: 7px 12px; cursor: pointer; line-height: 1.2;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+button:hover, .btn:hover { border-color: var(--accent); }
+button:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+.btn-primary { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 500; }
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-ghost { background: transparent; border-color: transparent; }
+.btn-ghost:hover { background: var(--accent-soft); border-color: transparent; }
+
+/* ================= LIBRARY ================= */
+.lib { max-width: 72rem; margin: 0 auto; padding: 20px 16px 96px; display: flex; flex-direction: column; gap: 36px; }
+.topline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 600; font-size: 18px; color: var(--accent-ink); }
+.brand svg { color: var(--pink); }
+
+/* Hero */
+.hero {
+  display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: stretch;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 28px; overflow: hidden; box-shadow: var(--shadow);
+}
+.hero-text { padding: clamp(24px, 4vw, 44px); display: flex; flex-direction: column; justify-content: center; gap: 14px; min-width: 0; }
+.hello { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.hero h1 {
+  font-family: var(--font-display); font-weight: 700; font-size: clamp(28px, 4.4vw, 44px);
+  line-height: 1.35; margin: 0; text-wrap: balance; color: var(--fg);
+}
+.hero h1 em { font-style: normal; color: var(--accent-ink); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--fg); font-size: 13.5px; font-variant-numeric: tabular-nums;
+}
+.chip svg { color: var(--accent); }
+.hero-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.hero-photo { position: relative; min-height: 260px; }
+.hero-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; }
+.hero-photo::after { /* soft fade into the text side */
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 22%;
+  background: linear-gradient(90deg, var(--surface), transparent);
+}
+@media (max-width: 720px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero-photo { order: -1; min-height: 0; aspect-ratio: 16 / 10; }
+  .hero-photo::after { inset: auto 0 0 0; width: auto; height: 30%; background: linear-gradient(0deg, var(--surface), transparent); }
+}
+
+.btn-cute {
+  border-radius: 999px; padding: 10px 18px; font-weight: 600;
+  background: var(--accent); border-color: var(--accent); color: var(--on-accent);
+  box-shadow: 0 3px 0 var(--accent-ink);
+  transition: transform .12s, box-shadow .12s;
+}
+.btn-cute:hover { transform: translateY(-1px); box-shadow: 0 4px 0 var(--accent-ink); border-color: var(--accent); }
+.btn-cute:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--accent-ink); }
+.btn-soft { border-radius: 999px; padding: 10px 16px; background: var(--surface); }
+
+.search {
+  font: inherit; color: var(--fg); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; width: 14rem; max-width: 100%;
+}
+.sec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.sec-title {
+  font-family: var(--font-display); font-weight: 600; font-size: 22px; margin: 0;
+  display: flex; align-items: center; gap: 8px;
+}
+.sec-title svg { color: var(--pink); }
+
+/* Continue reading */
+.continue {
+  position: relative; display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 22px; align-items: center;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 18px 18px 18px 22px;
+}
+.continue .cover { width: 96px; }
+.continue-info { min-width: 0; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.continue-title { font-family: var(--font-display); font-size: 21px; font-weight: 600; line-height: 1.4; margin: 0; overflow-wrap: anywhere; }
+.continue-meta { color: var(--muted); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.paw-track { position: relative; width: min(100%, 24rem); height: 10px; border-radius: 999px; background: var(--accent-soft); }
+.paw-track > span { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--accent); }
+.paw-track > i { /* paw marker riding the end of the bar */
+  position: absolute; top: 50%; width: 22px; height: 22px; transform: translate(-50%, -50%);
+  border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); display: grid; place-items: center; color: var(--pink);
+}
+.cat-spot { /* kittens are photographed on white, so they always sit on a light patch */
+  background: var(--spot); border-radius: 50%; display: grid; place-items: end center; overflow: hidden;
+}
+.cat-spot img { mix-blend-mode: multiply; display: block; width: 100%; height: auto; }
+.continue .cat-spot { width: 132px; height: 132px; }
+@media (max-width: 640px) {
+  .continue { grid-template-columns: 80px minmax(0, 1fr); padding: 16px; gap: 16px; }
+  .continue .cover { width: 80px; }
+  .continue .cat-spot { display: none; }
+}
+
+/* Shelf grid with wooden ledges */
+.shelf {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  column-gap: 26px; row-gap: 34px;
+}
+@media (max-width: 480px) { .shelf { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 18px; } }
+.card { display: flex; flex-direction: column; gap: 12px; min-width: 0; position: relative; }
+.stand { position: relative; padding: 0 6px 14px; }
+.stand::after { /* the plank — reaches into the gap so a row reads as one shelf */
+  content: ""; position: absolute; left: -14px; right: -14px; bottom: 0; height: 14px;
+  background: linear-gradient(180deg, var(--wood) 0 62%, var(--wood-edge) 62% 100%);
+  border-radius: 3px; box-shadow: 0 6px 10px -6px rgba(60,35,15,.35);
+}
+.cover-btn {
+  padding: 0; border: 0; background: none; border-radius: 4px 10px 10px 4px; display: block; width: 100%;
+  transition: transform .2s ease;
+}
+.cover-btn:hover { transform: translateY(-6px) rotate(-1deg); }
+.cover {
+  position: relative; aspect-ratio: 2 / 3; width: 100%; max-width: 100%;
+  border-radius: 3px 9px 9px 3px; overflow: hidden; box-shadow: var(--shadow);
+  background: var(--line);
+}
+.cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cover::before { /* spine crease */
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 10px; z-index: 1;
+  background: linear-gradient(90deg, rgba(0,0,0,.20), rgba(255,255,255,.14) 60%, transparent);
+}
+.cover .read-strip { position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: rgba(0,0,0,.22); z-index: 1; }
+.cover .read-strip span { display: block; height: 100%; background: var(--accent); }
+.gen {
+  width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between;
+  padding: 16% 12% 14% 17%; text-align: left;
+}
+.gen-title {
+  font-family: var(--font-display); font-weight: 600; line-height: 1.4; font-size: clamp(14px, 1.6vw, 18px);
+  overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;
+}
+.gen-paw { width: 26%; opacity: .55; }
+.gen-foot { font-size: 11px; letter-spacing: .08em; opacity: .8; }
+.tag {
+  position: absolute; top: 8px; right: 8px; z-index: 2; font-size: 11px; padding: 3px 9px; border-radius: 999px;
+  background: #fff6ec; color: #8a4b22; font-weight: 600;
+}
+.done-badge {
+  position: absolute; top: -8px; right: -8px; z-index: 3; width: 30px; height: 30px; border-radius: 50%;
+  background: var(--pink); color: #fff; display: grid; place-items: center; box-shadow: var(--shadow);
+}
+.card-info { display: grid; grid-template-columns: 1fr auto; gap: 2px 6px; align-items: start; min-width: 0; padding: 0 2px; }
+.card-title {
+  font-weight: 600; line-height: 1.45; min-width: 0; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.card-meta { grid-column: 1; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.more { grid-column: 2; grid-row: 1 / span 2; padding: 4px 6px; border-color: transparent; background: transparent; color: var(--muted); border-radius: 999px; }
+.more:hover { background: var(--accent-soft); border-color: transparent; }
+.menu {
+  position: absolute; right: 0; top: calc(100% - 4px); z-index: 20; min-width: 12rem;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow);
+  padding: 6px; display: flex; flex-direction: column; gap: 2px;
+}
+.menu button { border: 0; background: transparent; justify-content: flex-start; width: 100%; text-align: left; border-radius: 10px; }
+.menu button:hover { background: var(--accent-soft); }
+.menu .danger { color: var(--danger); }
+.menu .danger.confirm { background: var(--danger); color: var(--surface); }
+
+.add-card {
+  aspect-ratio: 2 / 3; width: 100%; border: 2px dashed var(--wood-edge); border-radius: 3px 9px 9px 3px;
+  background: var(--accent-soft); color: var(--accent-ink); flex-direction: column; justify-content: center; gap: 10px;
+  font-size: 14px; text-align: center; padding: 12px; font-weight: 500;
+}
+.add-card:hover { border-color: var(--accent); }
+.add-card .plus { width: 44px; height: 44px; border-radius: 50%; background: var(--surface); display: grid; place-items: center; color: var(--accent); }
+
+/* Empty shelf */
+.empty {
+  display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 28px; align-items: center;
+  background: var(--surface); border: 1px dashed var(--wood-edge); border-radius: 24px; padding: 22px 26px; margin-bottom: 30px;
+}
+.empty .cat-spot { width: 200px; height: 160px; border-radius: 50% 50% 46% 46%; }
+.empty h3 { font-family: var(--font-display); font-size: 20px; margin: 0 0 6px; }
+.empty p { margin: 0; color: var(--muted); line-height: 1.7; max-width: 34rem; }
+@media (max-width: 560px) { .empty { grid-template-columns: 1fr; justify-items: center; text-align: center; } }
+
+.foot-cat { display: flex; justify-content: center; align-items: center; gap: 14px; color: var(--muted); font-size: 13.5px; }
+.foot-cat .cat-spot { width: 76px; height: 76px; flex: none; }
+/* ================= READER ================= */
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.bar-inner {
+  max-width: 64rem; margin: 0 auto; padding: 10px 16px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.book { flex: 1 1 10rem; min-width: 0; display: flex; flex-direction: column; }
+.book-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.book-meta { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tools { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.size-group { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.size-group button { border: 0; border-radius: 0; background: var(--surface); }
+.size-group button + button { border-left: 1px solid var(--line); }
+.size-group .small { font-size: 13px; }
+.size-group .big { font-size: 18px; font-weight: 600; }
+
+.panel {
+  max-width: 64rem; margin: 0 auto; padding: 4px 16px 16px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 18px;
+}
+.field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.label {
+  font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
+  display: flex; justify-content: space-between;
+}
+.label output { font-variant-numeric: tabular-nums; color: var(--fg); letter-spacing: 0; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+select { font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
+.modes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.mode { flex-direction: column; justify-content: center; padding: 8px 4px; font-size: 13px; }
+.mode .swatch {
+  width: 100%; height: 26px; border-radius: 5px; display: grid; place-items: center;
+  font-family: var(--font-read); font-size: 15px; border: 1px solid rgba(127,127,127,.25);
+}
+.mode[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.sw-light { background: #ffffff; color: #23211d; }
+.sw-dark  { background: #17191a; color: #dcdad5; }
+.sw-sepia { background: #f1e6cf; color: #4a3b28; }
+.sw-night { background: #1c1712; color: #d9c7a7; }
+
+.progress { height: 2px; }
+.progress span { display: block; height: 100%; width: 0; background: var(--accent); }
+
+.reader main { padding: 0 16px; }
+.page {
+  max-width: var(--read-width); margin: 0 auto; padding-block: 40px 120px;
+  font-family: var(--font-read); font-size: var(--read-size); line-height: var(--read-lh);
+  overflow-wrap: anywhere;
+}
+.page p { margin: 0 0 1em; text-align: var(--read-align, left); }
+.page.indent p { text-indent: 2em; }
+.pmark {
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--font-ui); font-size: 12px; color: var(--muted);
+  letter-spacing: .05em; margin: 2.2em 0 1.4em; font-variant-numeric: tabular-nums;
+}
+.pmark::before, .pmark::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.page.hide-marks .pmark { display: none; }
+.page .pending {
+  font-family: var(--font-ui); font-size: 14px; color: var(--muted); text-indent: 0 !important;
+  border: 1px dashed var(--line); border-radius: 12px; padding: 14px 16px; background: var(--accent-soft);
+}
+.ocr-banner {
+  max-width: var(--read-width); margin: 24px auto 0; display: grid; grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: 14px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 10px 14px;
+  font-size: 14px; line-height: 1.5;
+}
+.ocr-banner .cat-spot { width: 56px; height: 56px; }
+.ocr-body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ocr-body .paw-track { height: 6px; width: 100%; }
+.modal {
+  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px;
+  background: color-mix(in srgb, var(--fg) 35%, transparent);
+}
+.modal-card {
+  width: min(100%, 26rem); background: var(--surface); color: var(--fg); border-radius: 26px; padding: 22px 24px 20px;
+  box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;
+}
+.modal-card .cat-spot { width: 120px; height: 120px; }
+.modal-card h2 { font-family: var(--font-display); font-size: 22px; margin: 4px 0 0; }
+.modal-card p { margin: 0; line-height: 1.65; }
+.modal-note { font-size: 13px; color: var(--muted); }
+.modal-note b { color: var(--fg); font-weight: 600; }
+.modal-steps { text-align: left; margin: 4px 0 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.6; }
+.modal-steps b { color: var(--fg); font-weight: 600; }
+.modal-steps code { font-family: var(--font-ui); background: var(--accent-soft); padding: 1px 6px; border-radius: 6px; font-size: 13px; }
+.modal-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+.sample-note {
+  font-family: var(--font-ui); font-size: 13.5px; color: var(--muted);
+  border: 1px dashed var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 2em; line-height: 1.6;
+}
+
+/* Shared overlays */
+.drop {
+  position: fixed; inset: 0; z-index: 50; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  border: 3px dashed var(--accent); font-size: 20px; color: var(--accent);
+}
+.status {
+  position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%); z-index: 40;
+  background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 999px;
+  font-size: 14px; max-width: calc(100% - 32px); text-align: center;
+}
+.to-top {
+  position: fixed; right: 16px; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 30;
+  border-radius: 999px; width: 42px; height: 42px; justify-content: center; padding: 0;
+}
+@media (max-width: 560px) {
+  .tools { width: 100%; justify-content: space-between; }
+  .btn-label { display: none; }
+  .search { flex: 1 1 10rem; }
+}
+</style>
+
+<!-- ================= LIBRARY VIEW ================= -->
+<section class="lib" id="libView">
+  <div class="topline">
+    <span class="brand">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="12" cy="16" rx="5.2" ry="4.3"/><ellipse cx="5.6" cy="10.4" rx="2.1" ry="2.6"/><ellipse cx="9.4" cy="6.4" rx="2.1" ry="2.7"/><ellipse cx="14.6" cy="6.4" rx="2.1" ry="2.7"/><ellipse cx="18.4" cy="10.4" rx="2.1" ry="2.6"/></svg>
+      ห้องอ่านหนังสือ
+    </span>
+    <button class="btn-soft" id="libMode" title="สลับโหมดสี" aria-label="สลับโหมดสี">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg>
+      <span id="libModeName">สว่าง</span>
+    </button>
+  </div>
+
+  <header class="hero">
+    <div class="hero-text">
+      <span class="hello" id="hello">สวัสดีจ้า</span>
+      <h1>วันนี้อยากอ่าน<br><em>เรื่องอะไรดีน้า</em></h1>
+      <div class="chips" id="chips"></div>
+      <div class="hero-actions">
+        <label class="btn btn-cute" for="fileInput" tabindex="0" id="addBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          เพิ่มหนังสือ (PDF)
+        </label>
+      </div>
+    </div>
+    <div class="hero-photo"><img src="assets/cat-nook.webp" alt="ลูกแมวสามสีใส่แว่นกำลังนั่งอ่านหนังสือบนเบาะนุ่ม"></div>
+  </header>
+
+  <div id="continueWrap" hidden>
+    <div class="sec-head"><h2 class="sec-title"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="12" cy="16" rx="5.2" ry="4.3"/><ellipse cx="5.6" cy="10.4" rx="2.1" ry="2.6"/><ellipse cx="9.4" cy="6.4" rx="2.1" ry="2.7"/><ellipse cx="14.6" cy="6.4" rx="2.1" ry="2.7"/><ellipse cx="18.4" cy="10.4" rx="2.1" ry="2.6"/></svg>อ่านค้างไว้</h2></div>
+    <div class="continue" id="continue"></div>
+  </div>
+
+  <div>
+    <div class="sec-head">
+      <h2 class="sec-title" id="shelfLabel"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="12" cy="16" rx="5.2" ry="4.3"/><ellipse cx="5.6" cy="10.4" rx="2.1" ry="2.6"/><ellipse cx="9.4" cy="6.4" rx="2.1" ry="2.7"/><ellipse cx="14.6" cy="6.4" rx="2.1" ry="2.7"/><ellipse cx="18.4" cy="10.4" rx="2.1" ry="2.6"/></svg><span>ชั้นหนังสือของฉัน</span></h2>
+      <input type="search" class="search" id="search" placeholder="ค้นหาชื่อหนังสือ" aria-label="ค้นหาชื่อหนังสือ">
+    </div>
+    <div class="empty" id="emptyNote" hidden>
+      <div class="cat-spot"><img src="assets/cat-lie.webp" alt=""></div>
+      <div>
+        <h3>ชั้นยังว่างอยู่เลย</h3>
+        <p>กด “เพิ่มหนังสือ” หรือลากไฟล์ PDF มาวางบนหน้านี้ หนังสือจะมาตั้งเรียงบนชั้นพร้อมภาพปก ระหว่างนี้ลองเปิดเล่มตัวอย่างข้างล่างดูก่อนได้นะ</p>
+      </div>
+    </div>
+    <div class="shelf" id="shelf"></div>
+  </div>
+
+  <div class="foot-cat" id="footCat" hidden>
+    <div class="cat-spot"><img src="assets/cat-sit.webp" alt=""></div>
+    <span id="footText"></span>
+  </div>
+</section>
+
+<!-- ================= READER VIEW ================= -->
+<section class="reader" id="readerView" hidden>
+  <div class="bar">
+    <div class="bar-inner">
+      <button class="btn-ghost" id="backBtn" title="กลับไปชั้นหนังสือ" aria-label="กลับไปชั้นหนังสือ">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+        <span class="btn-label">ชั้นหนังสือ</span>
+      </button>
+      <div class="book">
+        <span class="book-title" id="bookTitle"></span>
+        <span class="book-meta" id="bookMeta"></span>
+      </div>
+      <div class="tools">
+        <div class="size-group" role="group" aria-label="ขนาดตัวอักษร">
+          <button id="sizeDown" class="small" title="ตัวอักษรเล็กลง (−)" aria-label="ตัวอักษรเล็กลง">ก−</button>
+          <button id="sizeUp" class="big" title="ตัวอักษรใหญ่ขึ้น (+)" aria-label="ตัวอักษรใหญ่ขึ้น">ก+</button>
+        </div>
+        <button id="cycleMode" title="สลับโหมด (m)" aria-label="สลับโหมดสี">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg>
+          <span class="btn-label" id="modeName">สว่าง</span>
+        </button>
+        <button id="settingsBtn" aria-expanded="false" aria-controls="panel" title="ตั้งค่าการอ่าน">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+          <span class="btn-label">ตั้งค่า</span>
+        </button>
+      </div>
+    </div>
+    <div class="panel" id="panel" hidden>
+      <div class="field">
+        <span class="label">โหมดการอ่าน</span>
+        <div class="modes">
+          <button class="mode" data-mode="light" aria-pressed="false"><span class="swatch sw-light">ก</span>สว่าง</button>
+          <button class="mode" data-mode="dark" aria-pressed="false"><span class="swatch sw-dark">ก</span>มืด</button>
+          <button class="mode" data-mode="sepia" aria-pressed="false"><span class="swatch sw-sepia">ก</span>ถนอมตา</button>
+          <button class="mode" data-mode="night" aria-pressed="false"><span class="swatch sw-night">ก</span>กลางคืน</button>
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="sizeRange">ขนาดตัวอักษร <output id="sizeOut">20 px</output></label>
+        <input type="range" id="sizeRange" min="14" max="40" step="1" value="20">
+        <label class="label" for="lhRange">ระยะห่างบรรทัด <output id="lhOut">1.85</output></label>
+        <input type="range" id="lhRange" min="1.3" max="2.6" step="0.05" value="1.85">
+      </div>
+      <div class="field">
+        <label class="label" for="fontSel">แบบอักษร</label>
+        <select id="fontSel">
+          <option value="sarabun">สารบรรณ (Sarabun)</option>
+          <option value="serif">มีหัว (Noto Serif Thai)</option>
+          <option value="anuphan">อนุพันธ์ (Anuphan)</option>
+          <option value="system">ฟอนต์ของเครื่อง</option>
+        </select>
+        <label class="label" for="widthRange">ความกว้างคอลัมน์ <output id="widthOut">38 em</output></label>
+        <input type="range" id="widthRange" min="24" max="60" step="1" value="38">
+      </div>
+      <div class="field">
+        <span class="label">การจัดหน้า</span>
+        <label><input type="checkbox" id="indentChk"> ย่อหน้าบรรทัดแรก</label>
+        <label><input type="checkbox" id="justifyChk"> จัดเต็มแนว</label>
+        <label><input type="checkbox" id="marksChk" checked> แสดงเลขหน้าจาก PDF</label>
+      </div>
+    </div>
+    <div class="progress"><span id="progressBar"></span></div>
+  </div>
+  <main>
+    <div class="ocr-banner" id="ocrBanner" hidden>
+      <div class="cat-spot"><img src="assets/cat-lean.webp" alt=""></div>
+      <div class="ocr-body">
+        <span id="ocrBannerText"></span>
+        <div class="paw-track"><span id="ocrBannerBar"></span></div>
+      </div>
+      <button class="btn-soft" id="ocrBannerBtn">แปลงต่อ</button>
+    </div>
+    <article class="page" id="page"></article>
+  </main>
+  <button class="to-top" id="toTop" title="กลับขึ้นด้านบน" aria-label="กลับขึ้นด้านบน" hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>
+  </button>
+</section>
+
+<input type="file" id="fileInput" accept="application/pdf,.pdf,.json,application/json" multiple hidden>
+<input type="file" id="coverInput" accept="image/*" hidden>
+<div class="drop" id="drop" hidden>วางไฟล์ PDF ตรงนี้เพื่อเพิ่มเข้าชั้นหนังสือ</div>
+<div class="status" id="status" role="status" hidden></div>
+<div class="modal" id="ocrModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="ocrAskTitle">
+    <div class="cat-spot"><img src="assets/cat-sit.webp" alt=""></div>
+    <h2 id="ocrAskTitle">เล่มนี้เป็นภาพสแกน</h2>
+    <p id="ocrAskText"></p>
+    <ol class="modal-steps">
+      <li><b>แปลงฟรีบนเครื่อง Mac</b> (แนะนำ เร็วและไม่ใช้ Claude): ใส่ไฟล์ PDF ในโฟลเดอร์ <code>สแกน</code> ดับเบิลคลิก <code>แปลงสแกน.command</code> แล้วเพิ่มไฟล์ <code>.book.json</code> ที่ได้เข้าชั้น ข้อความจะเติมเข้าเล่มนี้เอง</li>
+      <li id="ocrClaudeNote"><b>หรือให้ Claude อ่านในหน้านี้</b>: ช้ากว่า (หน้าละราวครึ่งนาที) และใช้โควตา Claude ของคุณ</li>
+    </ol>
+    <div class="modal-actions">
+      <button class="btn-cute" id="ocrLater">เข้าใจแล้ว</button>
+      <button class="btn-soft" id="ocrClaude">ให้ Claude อ่าน</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const root = document.documentElement;
+  const page = $('page');
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const num = n => Number(n).toLocaleString('th-TH');
+
+  /* ---------- small settings store (localStorage) ---------- */
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } }
+  };
+
+  /* ---------- book store (IndexedDB, falls back to memory) ---------- */
+  const mem = { meta: new Map(), text: new Map(), pdf: new Map() };
+  const dbp = new Promise(res => {
+    try {
+      const r = indexedDB.open('reader-library', 2);
+      r.onupgradeneeded = () => {
+        const names = r.result.objectStoreNames;
+        for (const n of ['meta', 'text', 'pdf']) if (!names.contains(n)) r.result.createObjectStore(n, { keyPath: 'id' });
+      };
+      r.onsuccess = () => res(r.result);
+      r.onerror = r.onblocked = () => res(null);
+    } catch { res(null); }
+  });
+  async function run(name, mode, op) {
+    const db = await dbp;
+    if (!db) return op(null, mem[name]);
+    return new Promise((res, rej) => {
+      const t = db.transaction(name, mode);
+      const rq = op(t.objectStore(name));
+      t.oncomplete = () => res(rq && rq.result);
+      t.onerror = () => rej(t.error);
+    });
+  }
+  const books = {
+    all: () => run('meta', 'readonly', (s, m) => s ? s.getAll() : [...m.values()]),
+    get: (name, id) => run(name, 'readonly', (s, m) => s ? s.get(id) : m.get(id)),
+    put: (name, v) => run(name, 'readwrite', (s, m) => s ? s.put(v) : (m.set(v.id, v), null)),
+    del: (name, id) => run(name, 'readwrite', (s, m) => s ? s.delete(id) : (m.delete(id), null))
+  };
+
+  /* ---------- reading settings ---------- */
+  const FONTS = {
+    sarabun: '"Sarabun", "Thonburi", system-ui, sans-serif',
+    serif: '"Noto Serif Thai", "Sarabun", Georgia, serif',
+    anuphan: '"Anuphan", "Sarabun", system-ui, sans-serif',
+    system: 'system-ui, -apple-system, "Thonburi", sans-serif'
+  };
+  const MODES = ['light', 'dark', 'sepia', 'night'];
+  const MODE_NAMES = { light: 'สว่าง', dark: 'มืด', sepia: 'ถนอมตา', night: 'กลางคืน' };
+  const prefersDark = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+  const s = Object.assign({
+    mode: prefersDark ? 'dark' : 'light', size: 20, lh: 1.85, font: 'sarabun',
+    width: 38, indent: false, justify: false, marks: true
+  }, store.get('reader.settings', {}));
+
+  function apply() {
+    s.size = Math.min(40, Math.max(14, s.size));
+    root.dataset.mode = s.mode;
+    root.style.setProperty('--read-size', s.size + 'px');
+    root.style.setProperty('--read-lh', s.lh);
+    root.style.setProperty('--read-width', s.width + 'em');
+    root.style.setProperty('--font-read', FONTS[s.font]);
+    root.style.setProperty('--read-align', s.justify ? 'justify' : 'left');
+    page.classList.toggle('indent', s.indent);
+    page.classList.toggle('hide-marks', !s.marks);
+    $('sizeRange').value = s.size; $('sizeOut').textContent = s.size + ' px';
+    $('lhRange').value = s.lh; $('lhOut').textContent = Number(s.lh).toFixed(2);
+    $('widthRange').value = s.width; $('widthOut').textContent = s.width + ' em';
+    $('fontSel').value = s.font;
+    $('indentChk').checked = s.indent; $('justifyChk').checked = s.justify; $('marksChk').checked = s.marks;
+    $('modeName').textContent = $('libModeName').textContent = MODE_NAMES[s.mode];
+    document.querySelectorAll('.mode').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === s.mode)));
+    store.set('reader.settings', s);
+  }
+  function keepPlace(fn) {
+    const doc = document.scrollingElement;
+    const ratio = doc.scrollHeight > innerHeight ? doc.scrollTop / (doc.scrollHeight - innerHeight) : 0;
+    fn();
+    if (!$('readerView').hidden) doc.scrollTop = ratio * (doc.scrollHeight - innerHeight);
+  }
+  const change = patch => keepPlace(() => { Object.assign(s, patch); apply(); });
+  const nextMode = () => change({ mode: MODES[(MODES.indexOf(s.mode) + 1) % MODES.length] });
+
+  $('sizeDown').onclick = () => change({ size: s.size - 1 });
+  $('sizeUp').onclick = () => change({ size: s.size + 1 });
+  $('sizeRange').oninput = e => change({ size: +e.target.value });
+  $('lhRange').oninput = e => change({ lh: +e.target.value });
+  $('widthRange').oninput = e => change({ width: +e.target.value });
+  $('fontSel').onchange = e => change({ font: e.target.value });
+  $('indentChk').onchange = e => change({ indent: e.target.checked });
+  $('justifyChk').onchange = e => change({ justify: e.target.checked });
+  $('marksChk').onchange = e => change({ marks: e.target.checked });
+  document.querySelectorAll('.mode').forEach(b => b.onclick = () => change({ mode: b.dataset.mode }));
+  $('cycleMode').onclick = nextMode;
+  $('libMode').onclick = nextMode;
+  $('settingsBtn').onclick = () => {
+    const p = $('panel'); p.hidden = !p.hidden;
+    $('settingsBtn').setAttribute('aria-expanded', String(!p.hidden));
+  };
+  $('addBtn').addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('fileInput').click(); }
+  });
+  document.addEventListener('keydown', e => {
+    if (e.target.matches('input, select, textarea') || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === 'Escape') { closeMenus(); if (!$('readerView').hidden) showLibrary(); return; }
+    if ($('readerView').hidden) return;
+    if (e.key === '+' || e.key === '=') change({ size: s.size + 1 });
+    else if (e.key === '-' || e.key === '_') change({ size: s.size - 1 });
+    else if (e.key === 'm') nextMode();
+  });
+
+  /* ---------- status toast ---------- */
+  let statusTimer;
+  function status(msg, sticky) {
+    const t = $('status'); t.textContent = msg; t.hidden = false;
+    clearTimeout(statusTimer);
+    if (!sticky) statusTimer = setTimeout(() => t.hidden = true, 3500);
+  }
+
+  /* ---------- covers ---------- */
+  // generated covers borrow the kitten's world: rose book cloth, cocoa, orange patch, cream, sage leaves, mug blue
+  const PALETTE = [['#b97568', '#fff1ea'], ['#4a3427', '#f6e3cf'], ['#d98a45', '#fff6ec'], ['#efe0cb', '#5a3b28'],
+                   ['#8fa58a', '#f8f5ec'], ['#7f95a8', '#f5f2ec'], ['#e9b4ab', '#5a2f28'], ['#6e5040', '#f4e2cf']];
+  const PAW = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="12" cy="16" rx="5.2" ry="4.3"/><ellipse cx="5.6" cy="10.4" rx="2.1" ry="2.6"/><ellipse cx="9.4" cy="6.4" rx="2.1" ry="2.7"/><ellipse cx="14.6" cy="6.4" rx="2.1" ry="2.7"/><ellipse cx="18.4" cy="10.4" rx="2.1" ry="2.6"/></svg>';
+  const paw = (cls, size) => { const s = el('span', cls); s.innerHTML = PAW; if (size) s.firstChild.setAttribute('width', size), s.firstChild.setAttribute('height', size); return s; };
+  function hash(str) { let h = 0; for (const c of str) h = (h * 31 + c.codePointAt(0)) | 0; return Math.abs(h); }
+  function coverEl(meta) {
+    const c = el('div', 'cover');
+    if (meta.cover) {
+      const img = el('img'); img.src = meta.cover; img.alt = ''; img.loading = 'lazy'; c.append(img);
+    } else {
+      const [bg, fg] = PALETTE[hash(meta.title) % PALETTE.length];
+      const g = el('div', 'gen'); g.style.background = bg; g.style.color = fg;
+      g.append(el('div', 'gen-title', meta.title), paw('gen-paw'), el('div', 'gen-foot', meta.sample ? 'เรื่องสั้นตัวอย่าง' : num(meta.numPages) + ' หน้า'));
+      c.append(g);
+    }
+    if (meta.sample) c.append(el('span', 'tag', 'ตัวอย่าง'));
+    if (meta.progress > 0.005 && meta.progress < 0.995) {
+      const strip = el('div', 'read-strip'); const sp = el('span'); sp.style.width = (meta.progress * 100).toFixed(1) + '%';
+      strip.append(sp); c.append(strip);
+    }
+    return c;
+  }
+  async function renderCover(pdf) {
+    try {
+      const p = await pdf.getPage(1);
+      const v = p.getViewport({ scale: 1 });
+      const vp = p.getViewport({ scale: 420 / v.width });
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cv.width, cv.height);
+      await p.render({ canvasContext: ctx, viewport: vp, intent: 'print' }).promise;
+      return cv.toDataURL('image/jpeg', 0.82);
+    } catch { return null; }
+  }
+  function imageToCover(file) {
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const w = 420, h = Math.round(w * 1.5);
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        const ctx = cv.getContext('2d');
+        const sc = Math.max(w / img.width, h / img.height);
+        const dw = img.width * sc, dh = img.height * sc;
+        ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+        URL.revokeObjectURL(url);
+        res(cv.toDataURL('image/jpeg', 0.85));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('bad image')); };
+      img.src = url;
+    });
+  }
+
+  /* ---------- sample book ---------- */
+  const SAMPLE_META = { id: 'sample', sample: true, title: 'ร้านหนังสือริมคลอง', numPages: 2, progress: 0 };
+  const SAMPLE_PAGES = [[
+    'ฝนเพิ่งหยุดตกตอนที่มะลิเปิดประตูไม้บานเฟี้ยมของร้าน กลิ่นกระดาษเก่าผสมกับกลิ่นดินเปียกลอยเข้ามาพร้อมลมเย็นจากคลอง เธอยืนนิ่งอยู่ครู่หนึ่ง ฟังเสียงเรือหางยาวที่แล่นผ่านไปไกล ๆ แล้วจึงหันกลับมาจัดหนังสือบนชั้นเหมือนทุกเช้า',
+    'ร้านนี้เป็นของยายมาก่อน ชั้นไม้สักสูงจรดเพดานยังมีรอยดินสอที่ยายใช้เขียนหมวดหมู่ไว้ด้วยลายมือเอียง ๆ “นิยาย” “ตำรากับข้าว” “กลอนเปล่า” บางชั้นเขียนไว้แค่ว่า “เล่มที่ยังไม่มีใครอ่าน” ซึ่งมะลิไม่เคยเข้าใจว่าหมายความว่าอย่างไร',
+    'จนกระทั่งเช้าวันนั้น ชายแปลกหน้าคนหนึ่งเดินเข้ามาพร้อมร่มสีกรมท่าที่ยังหยดน้ำ เขาไม่มองชั้นอื่นเลย ตรงดิ่งไปยังชั้นที่ยายเขียนไว้ แล้วหยิบสมุดปกผ้าสีเขียวหม่นออกมาหนึ่งเล่ม'
+  ], [
+    '“เล่มนี้ขายไหมครับ” เขาถาม เสียงเบาเหมือนกลัวจะปลุกใครบางคน',
+    'มะลิรับสมุดมาพลิกดู ข้างในว่างเปล่าทุกหน้า มีเพียงหน้าแรกที่เขียนด้วยหมึกซีดจางว่า “สำหรับคนที่กลับมา” เธอเงยหน้าขึ้นมองเขาอีกครั้ง และเพิ่งสังเกตว่าดวงตาคู่นั้นคุ้นเคยอย่างประหลาด',
+    'ข้างนอก ฝนเริ่มตกลงมาอีกระลอก'
+  ]];
+
+  /* ---------- library view ---------- */
+  let library = [];
+  let current = null;   // { meta, pages }
+
+  function closeMenus() { document.querySelectorAll('.menu').forEach(m => m.remove()); }
+  document.addEventListener('click', e => { if (!e.target.closest('.menu, .more')) closeMenus(); });
+
+  function timeAgo(t) {
+    if (!t) return '';
+    const m = Math.round((Date.now() - t) / 60000);
+    if (m < 1) return 'เมื่อสักครู่';
+    if (m < 60) return m + ' นาทีก่อน';
+    const h = Math.round(m / 60); if (h < 24) return h + ' ชั่วโมงก่อน';
+    const d = Math.round(h / 24); if (d < 30) return d + ' วันก่อน';
+    return new Date(t).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  const pct = p => Math.round((p || 0) * 100);
+
+  function cardMeta(b) {
+    if (b.sample) return 'ลองอ่านได้เลย';
+    if (b.ocr && b.ocr.state !== 'done') {
+      const o = b.ocr;
+      if (o.state === 'running') return `กำลังแปลงข้อความ ${num(o.done)}/${num(o.total)} หน้า`;
+      if (o.state === 'queued') return `รอคิวแปลงข้อความ · ${num(o.total)} หน้า`;
+      return `แปลงแล้ว ${num(o.done)}/${num(o.total)} หน้า · หยุดไว้`;
+    }
+    if (b.progress >= 0.995) return `${num(b.numPages)} หน้า · อ่านจบแล้ว`;
+    if (b.progress > 0.005) return `${num(b.numPages)} หน้า · อ่านแล้ว ${pct(b.progress)}%`;
+    return `${num(b.numPages)} หน้า · ยังไม่ได้อ่าน`;
+  }
+
+  function openMenu(btn, b) {
+    closeMenus();
+    const m = el('div', 'menu'); m.setAttribute('role', 'menu');
+    const cov = el('button', '', 'เปลี่ยนภาพปก');
+    cov.onclick = () => { closeMenus(); coverTarget = b.id; $('coverInput').click(); };
+    const reset = el('button', '', 'ใช้ปกจากหน้าแรกของ PDF');
+    reset.hidden = !b.customCover;
+    reset.onclick = async () => { closeMenus(); b.cover = b.pdfCover || null; b.customCover = false; await books.put('meta', b); drawLibrary(); };
+    const del = el('button', 'danger', 'ลบออกจากชั้น');
+    del.hidden = !!b.remote;   // books from GitHub are removed with: ./novel remove
+    del.onclick = async e => {
+      e.stopPropagation();
+      if (!del.classList.contains('confirm')) { del.classList.add('confirm'); del.textContent = 'กดอีกครั้งเพื่อยืนยันการลบ'; return; }
+      closeMenus();
+      stopOcr(b.id, true);
+      await books.del('meta', b.id); await books.del('text', b.id); await books.del('pdf', b.id);
+      library = library.filter(x => x.id !== b.id);
+      drawLibrary();
+      status(`ลบ “${b.title}” ออกจากชั้นแล้ว`);
+    };
+    const open = b.ocr && b.ocr.state !== 'done';
+    const busy = open && (b.ocr.state === 'running' || b.ocr.state === 'queued');
+    const ocr = el('button', '', busy ? 'หยุดให้ Claude อ่าน' : 'ให้ Claude อ่านหน้าสแกน');
+    ocr.hidden = !open || (!busy && !hasClaude());
+    ocr.onclick = () => { closeMenus(); busy ? stopOcr(b.id) : queueOcr(b.id); };
+    m.append(ocr, cov, reset, del);
+    btn.closest('.card').append(m);
+    cov.focus();
+  }
+
+  function greeting() {
+    const h = new Date().getHours();
+    return h < 5 ? 'ดึกแล้วนะ อ่านอีกนิดแล้วนอนน้า' : h < 12 ? 'อรุณสวัสดิ์จ้า' : h < 17 ? 'สวัสดีตอนบ่ายจ้า' : h < 20 ? 'สวัสดีตอนเย็นจ้า' : 'คืนนี้อ่านสบาย ๆ กันนะ';
+  }
+
+  function drawLibrary() {
+    const q = $('search').value.trim().toLowerCase();
+    const real = [...library].sort((a, b) => (b.lastRead || b.added) - (a.lastRead || a.added));
+    const shown = real.filter(b => !q || b.title.toLowerCase().includes(q));
+    const list = real.length ? shown : [SAMPLE_META];
+    const finished = real.filter(b => b.progress >= 0.995).length;
+    const reading = real.filter(b => b.progress > 0.005 && b.progress < 0.995).length;
+
+    $('hello').textContent = greeting();
+    const chips = $('chips'); chips.replaceChildren();
+    const chip = text => { const c = el('span', 'chip'); c.append(paw('', 14), document.createTextNode(text)); chips.append(c); };
+    if (real.length) {
+      chip(`${num(real.length)} เล่มบนชั้น`);
+      if (reading) chip(`กำลังอ่าน ${num(reading)} เล่ม`);
+      if (finished) chip(`อ่านจบแล้ว ${num(finished)} เล่ม`);
+    } else chip('ยังไม่มีหนังสือ มาเริ่มเล่มแรกกัน');
+
+    $('emptyNote').hidden = real.length > 0;
+    $('search').hidden = real.length < 2;
+    $('shelfLabel').lastChild.textContent = q ? `ผลการค้นหา “${$('search').value.trim()}” · ${num(shown.length)} เล่ม` : 'ชั้นหนังสือของฉัน';
+    $('footCat').hidden = !real.length || !!q;
+    $('footText').textContent = finished
+      ? `เก่งมาก อ่านจบไปแล้ว ${num(finished)} เล่ม เหมียวภูมิใจในตัวคุณนะ`
+      : 'อ่านทีละนิดก็พอ เหมียวเอาใจช่วยอยู่ตรงนี้';
+
+    // continue reading: most recent book that's opened but not finished
+    const cont = real.find(b => b.lastRead && b.progress < 0.995);
+    $('continueWrap').hidden = !cont || !!q;
+    if (cont && !q) {
+      const box = $('continue'); box.replaceChildren();
+      const cb = el('button', 'cover-btn'); cb.setAttribute('aria-label', 'อ่านต่อ ' + cont.title);
+      cb.append(coverEl(cont)); cb.onclick = () => openBook(cont.id);
+      const info = el('div', 'continue-info');
+      const p = pct(cont.progress);
+      const track = el('div', 'paw-track');
+      const fill = el('span'); fill.style.width = p + '%';
+      const mark = el('i'); mark.style.left = Math.max(4, p) + '%'; mark.innerHTML = PAW.replace('<svg ', '<svg width="12" height="12" ');
+      track.append(fill, mark);
+      const go = el('button', 'btn-cute', 'อ่านต่อเลย'); go.onclick = () => openBook(cont.id);
+      info.append(el('h3', 'continue-title', cont.title), track,
+        el('span', 'continue-meta', `อ่านไปแล้ว ${p}% · เปิดล่าสุด ${timeAgo(cont.lastRead)}`), go);
+      const spot = el('div', 'cat-spot'); const ci = el('img'); ci.src = 'assets/cat-lean.webp'; ci.alt = ''; spot.append(ci);
+      box.append(cb, info, spot);
+    }
+
+    const shelf = $('shelf'); shelf.replaceChildren();
+    for (const b of list) {
+      const card = el('article', 'card'); card.dataset.id = b.id;
+      const stand = el('div', 'stand');
+      const cb = el('button', 'cover-btn'); cb.setAttribute('aria-label', 'อ่าน ' + b.title);
+      cb.append(coverEl(b)); cb.onclick = () => openBook(b.id);
+      stand.append(cb);
+      if (b.progress >= 0.995) { const d = paw('done-badge', 16); d.title = 'อ่านจบแล้ว'; stand.append(d); }
+      const info = el('div', 'card-info');
+      info.append(el('span', 'card-title', b.title), el('span', 'card-meta', cardMeta(b)));
+      if (!b.sample) {
+        const more = el('button', 'more'); more.setAttribute('aria-label', 'ตัวเลือกของ ' + b.title); more.setAttribute('aria-haspopup', 'menu');
+        more.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>';
+        more.onclick = e => { e.stopPropagation(); openMenu(more, b); };
+        info.append(more);
+      }
+      card.append(stand, info);
+      shelf.append(card);
+    }
+    if (!q) {
+      const add = el('button', 'add-card');
+      add.innerHTML = '<span class="plus"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span>เพิ่มหนังสือ<br>จากไฟล์ PDF</span>';
+      add.onclick = () => $('fileInput').click();
+      const stand = el('div', 'stand'); stand.append(add);
+      const card = el('div', 'card'); card.append(stand); shelf.append(card);
+    }
+  }
+  $('search').oninput = drawLibrary;
+
+  function showLibrary() {
+    saveProgress(true);
+    current = null;
+    $('readerView').hidden = true; $('libView').hidden = false;
+    document.title = 'ห้องอ่านหนังสือ';
+    drawLibrary();
+    window.scrollTo(0, 0);
+  }
+  $('backBtn').onclick = showLibrary;
+
+  /* ---------- reader view ---------- */
+  function pageSection(paras, i, total, meta) {
+    const sec = el('section', 'pg'); sec.dataset.i = i;
+    if (total > 1) sec.append(el('div', 'pmark', 'หน้า ' + (i + 1)));
+    if (paras === null) {
+      const failed = meta.ocr?.failed?.includes(i);
+      const running = meta.ocr?.state === 'running' || meta.ocr?.state === 'queued';
+      sec.append(el('p', 'pending', failed ? 'Claude อ่านหน้านี้ไม่สำเร็จ ลองอีกครั้งจากแถบด้านบน หรือใช้ตัวแปลงบน Mac'
+        : running ? 'หน้านี้เป็นภาพสแกน กำลังรอ Claude อ่าน…' : 'หน้านี้เป็นภาพสแกน ยังไม่ได้แปลงเป็นข้อความ'));
+    } else paras.forEach(t => sec.append(el('p', '', t)));
+    return sec;
+  }
+  function updateReaderMeta(meta, pages) {
+    const chars = pages.reduce((a, ps) => a + (ps ? ps.reduce((b, t) => b + t.length, 0) : 0), 0);
+    $('bookMeta').textContent = `${num(pages.length)} หน้า · ประมาณ ${num(Math.max(1, Math.round(chars / 900)))} นาที`;
+    const bn = $('ocrBanner');
+    const o = meta.ocr;
+    bn.hidden = !o || o.state === 'done';
+    if (bn.hidden) return;
+    const busy = o.state === 'running' || o.state === 'queued';
+    $('ocrBannerText').textContent = busy
+      ? `Claude กำลังอ่านหน้าสแกน ${num(o.done)}/${num(o.total)} หน้า อ่านหน้าที่เสร็จแล้วไปก่อนได้เลย`
+      : (o.msg || `มีหน้าสแกนที่ยังไม่เป็นข้อความ ${num(o.total - o.done)} หน้า แปลงด้วย “แปลงสแกน.command” บน Mac แล้วเพิ่มไฟล์ .book.json ที่ได้${hasClaude() ? ' หรือให้ Claude อ่าน' : ''}`);
+    $('ocrBannerBtn').hidden = !busy && !hasClaude();
+    $('ocrBannerBtn').textContent = busy ? 'หยุด' : 'ให้ Claude อ่าน';
+    $('ocrBannerBtn').onclick = () => busy ? stopOcr(meta.id) : queueOcr(meta.id);
+    $('ocrBannerBar').style.width = (o.total ? o.done / o.total * 100 : 0).toFixed(1) + '%';
+  }
+  function renderBook(meta, pages) {
+    page.replaceChildren();
+    if (meta.sample) page.append(el('div', 'sample-note', 'นี่คือเรื่องสั้นตัวอย่าง ลองปรับขนาดตัวอักษรด้วยปุ่ม ก− / ก+ และสลับโหมดสีได้ที่แถบด้านบน กลับไปที่ชั้นหนังสือเพื่อเพิ่มไฟล์ PDF ของคุณเอง'));
+    const frag = document.createDocumentFragment();
+    pages.forEach((paras, i) => frag.append(pageSection(paras, i, pages.length, meta)));
+    page.append(frag);
+    $('bookTitle').textContent = meta.title;
+    updateReaderMeta(meta, pages);
+    document.title = meta.title + ' · ห้องอ่านหนังสือ';
+  }
+
+  async function openBook(id) {
+    closeMenus();
+    let meta, pages;
+    if (id === 'sample') { meta = SAMPLE_META; pages = SAMPLE_PAGES; }
+    else {
+      meta = library.find(b => b.id === id);
+      let t = await books.get('text', id);
+      if (!t && meta?.remote) t = await fetchRemoteBook(meta);
+      if (!meta || !t) { status('หาเนื้อหาของเล่มนี้ไม่เจอ ลองเพิ่มไฟล์ PDF ใหม่อีกครั้ง'); return; }
+      pages = t.pages;
+    }
+    current = { meta, pages };
+    renderBook(meta, pages);
+    $('libView').hidden = true; $('readerView').hidden = false;
+    $('panel').hidden = true; $('settingsBtn').setAttribute('aria-expanded', 'false');
+    window.scrollTo(0, 0);
+    requestAnimationFrame(() => {
+      if (meta.progress > 0.005 && meta.progress < 0.995) {
+        const doc = document.scrollingElement;
+        doc.scrollTop = meta.progress * (doc.scrollHeight - innerHeight);
+      }
+      onScroll();
+    });
+    if (!meta.sample) { meta.lastRead = Date.now(); books.put('meta', meta); }
+  }
+
+  /* ---------- progress ---------- */
+  let saveTimer;
+  function saveProgress(now) {
+    clearTimeout(saveTimer);
+    if (!current || current.meta.sample) return;
+    const doIt = () => books.put('meta', current.meta);
+    now ? doIt() : (saveTimer = setTimeout(doIt, 500));
+  }
+  function onScroll() {
+    if ($('readerView').hidden) return;
+    const doc = document.scrollingElement;
+    const max = doc.scrollHeight - innerHeight;
+    const r = max > 0 ? Math.min(1, doc.scrollTop / max) : 1;
+    $('progressBar').style.width = (r * 100).toFixed(2) + '%';
+    $('toTop').hidden = doc.scrollTop < innerHeight;
+    if (current && !current.meta.sample) { current.meta.progress = r; current.meta.lastRead = Date.now(); saveProgress(); }
+  }
+  addEventListener('scroll', onScroll, { passive: true });
+  addEventListener('pagehide', () => saveProgress(true));
+  $('toTop').onclick = () => window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+
+  /* ---------- PDF → text ---------- */
+  // Many Thai PDFs store tone marks/vowels in private-use code points; map them back to real Thai characters.
+  const PUA = {
+    0xF700: 0x0E10, 0xF701: 0x0E34, 0xF702: 0x0E35, 0xF703: 0x0E36, 0xF704: 0x0E37,
+    0xF705: 0x0E48, 0xF706: 0x0E49, 0xF707: 0x0E4A, 0xF708: 0x0E4B, 0xF709: 0x0E4C,
+    0xF70A: 0x0E48, 0xF70B: 0x0E49, 0xF70C: 0x0E4A, 0xF70D: 0x0E4B, 0xF70E: 0x0E4C,
+    0xF70F: 0x0E0D, 0xF710: 0x0E31, 0xF711: 0x0E4D, 0xF712: 0x0E47, 0xF713: 0x0E48,
+    0xF714: 0x0E49, 0xF715: 0x0E4A, 0xF716: 0x0E4B, 0xF717: 0x0E4C, 0xF718: 0x0E38,
+    0xF719: 0x0E39, 0xF71A: 0x0E3A
+  };
+  const cleanThai = t => t
+    .replace(/[-]/g, c => String.fromCharCode(PUA[c.charCodeAt(0)] || c.charCodeAt(0)))
+    .replace(/ํา/g, 'ำ')
+    .replace(/[­​]/g, '')
+    .normalize('NFC');
+  const isThai = ch => /[฀-๿]/.test(ch);
+  const endsSentence = t => /[.!?”"’)…ๆฯ]$/.test(t.trim());
+
+  async function extractPage(pdfPage) {
+    const tc = await pdfPage.getTextContent();
+    const lines = [];
+    for (const it of tc.items) {
+      if (!('str' in it)) continue;
+      const str = cleanThai(it.str);
+      const x = it.transform[4], y = it.transform[5];
+      const h = Math.abs(it.transform[3]) || it.height || 10;
+      let line = lines.length ? lines[lines.length - 1] : null;
+      if (!line || Math.abs(line.y - y) > h * 0.5) { line = { y, h, parts: [] }; lines.push(line); }
+      line.parts.push({ x, w: it.width, str, h });
+    }
+    const out = [];
+    for (const ln of lines) {
+      ln.parts.sort((a, b) => a.x - b.x);
+      let text = '', end = null;
+      for (const p of ln.parts) {
+        if (end !== null && p.x - end > p.h * 0.25 && !text.endsWith(' ') && !p.str.startsWith(' ')) text += ' ';
+        text += p.str;
+        end = p.x + p.w;
+      }
+      text = text.replace(/\s+/g, ' ').trim();
+      if (text) out.push({ text, y: ln.y, h: ln.h, x0: ln.parts[0].x });
+    }
+    if (!out.length) return [];
+    const gaps = [];
+    for (let i = 1; i < out.length; i++) gaps.push(Math.abs(out[i - 1].y - out[i].y));
+    const sorted = gaps.filter(g => g > 0).sort((a, b) => a - b);
+    const typical = sorted.length ? sorted[Math.floor(sorted.length / 2)] : 0;
+    const left = Math.min(...out.map(l => l.x0));
+    const paras = [];
+    let cur = out[0].text;
+    for (let i = 1; i < out.length; i++) {
+      const gap = Math.abs(out[i - 1].y - out[i].y);
+      const indent = out[i].x0 - left;
+      const bigGap = typical && gap > typical * 1.45;
+      if (bigGap || (indent > out[i].h * 0.8 && endsSentence(out[i - 1].text)) || (isThai(out[i].text[0]) && indent > out[i].h * 1.5)) {
+        paras.push(cur); cur = out[i].text;
+      } else {
+        const prev = cur.slice(-1), next = out[i].text[0];
+        if (prev === '-' && /[a-z]/i.test(next)) cur = cur.slice(0, -1) + out[i].text;
+        else if (isThai(prev) && isThai(next)) cur += out[i].text;
+        else cur += ' ' + out[i].text;
+      }
+    }
+    paras.push(cur);
+    return paras;
+  }
+
+  const newId = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
+
+  // a .book.json written by the Mac tool (tools/thai-ocr.swift)
+  async function importBookJson(file) {
+    let b;
+    try { b = JSON.parse(await file.text()); } catch { b = null; }
+    if (b?.format !== 'reader-book/1' || !Array.isArray(b.pages)) { status(`“${file.name}” ไม่ใช่ไฟล์หนังสือจากตัวแปลงสแกน`); return null; }
+    const pages = b.pages.map(p => Array.isArray(p) ? p.map(x => String(x).trim()).filter(Boolean) : []);
+    const cover = typeof b.cover === 'string' && b.cover.startsWith('data:image/') ? b.cover : null;
+    // the scanned PDF may already be on the shelf: fill its missing pages instead of adding a second copy
+    const target = b.source && library.find(m => m.key?.startsWith(b.source + ':') && m.numPages === pages.length);
+    if (target) {
+      stopOcr(target.id, true);
+      const t = await books.get('text', target.id) || { id: target.id, pages: pages.map(() => null) };
+      t.pages = t.pages.map((p, i) => p === null ? pages[i] : p);
+      await books.put('text', t);
+      if (target.ocr) { target.ocr.state = 'done'; target.ocr.done = target.ocr.total; target.ocr.msg = ''; }
+      await books.put('meta', target); await books.del('pdf', target.id);
+      if (current?.meta.id === target.id) { current.pages = t.pages; renderBook(target, t.pages); }
+      return target;
+    }
+    const key = 'book:' + (b.source || file.name);
+    const dup = library.find(m => m.key === key);
+    if (dup) return dup;
+    const id = newId();
+    const title = String(b.title || file.name.replace(/\.book\.json$|\.json$/i, '')).trim();
+    const meta = { id, key, title, cover, pdfCover: cover, customCover: false, numPages: pages.length, added: Date.now(), lastRead: 0, progress: 0 };
+    await books.put('text', { id, pages });
+    await books.put('meta', meta);
+    library.push(meta);
+    return meta;
+  }
+
+  async function importPdf(file, label) {
+    if (/\.json$/i.test(file.name) || file.type === 'application/json') return importBookJson(file);
+    if (!/pdf$/i.test(file.type) && !/\.pdf$/i.test(file.name)) { status(`“${file.name}” ไม่ใช่ไฟล์ PDF`); return null; }
+    const key = file.name + ':' + file.size;
+    const dup = library.find(b => b.key === key);
+    if (dup) return dup;
+    status(`${label}กำลังเปิด ${file.name} …`, true);
+    const data = new Uint8Array(await file.arrayBuffer());
+    const pdf = await pdfjsLib.getDocument({ data, isEvalSupported: false }).promise;
+    const pages = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      pages.push(await extractPage(await pdf.getPage(i)));
+      if (i % 5 === 0 || i === pdf.numPages) status(`${label}กำลังดึงข้อความ หน้า ${num(i)} / ${num(pdf.numPages)}`, true);
+    }
+    // a page with (almost) no text layer is a scanned image — Claude will read it later
+    const scanned = [];
+    pages.forEach((p, i) => { if (p.join('').replace(/\s/g, '').length < 8) { pages[i] = null; scanned.push(i); } });
+    status(`${label}กำลังสร้างภาพปก…`, true);
+    const cover = await renderCover(pdf);
+    let title = file.name.replace(/\.pdf$/i, '').replace(/[_]+/g, ' ');
+    try { const m = await pdf.getMetadata(); const t = m?.info?.Title?.trim(); if (t && !/^untitled|microsoft word/i.test(t)) title = cleanThai(t); } catch {}
+    const id = newId();
+    const meta = { id, key, title, cover, pdfCover: cover, customCover: false, numPages: pdf.numPages, added: Date.now(), lastRead: 0, progress: 0 };
+    if (scanned.length) {
+      meta.ocr = { state: 'paused', total: scanned.length, done: 0, failed: [] };
+      await books.put('pdf', { id, data: await file.arrayBuffer() });   // a copy of the bytes, so OCR can resume after a reload
+    }
+    await books.put('text', { id, pages });
+    await books.put('meta', meta);
+    library.push(meta);
+    return meta;
+  }
+
+  async function addFiles(files) {
+    files = [...files];
+    if (!files.length) return;
+    if (!window.pdfjsLib) { status('โหลดตัวอ่าน PDF ไม่สำเร็จ ลองรีเฟรชหน้านี้อีกครั้ง'); return; }
+    const added = [];
+    for (let i = 0; i < files.length; i++) {
+      const label = files.length > 1 ? `เล่มที่ ${i + 1}/${files.length} · ` : '';
+      try { const m = await importPdf(files[i], label); if (m) added.push(m); }
+      catch (err) {
+        console.error(err);
+        status(err?.name === 'PasswordException' ? `“${files[i].name}” ติดรหัสผ่าน เปิดไม่ได้` : `เปิด “${files[i].name}” ไม่สำเร็จ ไฟล์อาจเสียหาย`);
+        await new Promise(r => setTimeout(r, 1500));
+      }
+    }
+    if (!added.length) return;
+    const scanned = added.filter(m => m.ocr && m.ocr.state === 'paused' && !m.ocr.asked);
+    if (scanned.length) {
+      scanned.forEach(m => { m.ocr.asked = true; books.put('meta', m); });
+      $('status').hidden = true;
+      if (await askOcr(scanned)) scanned.forEach(m => queueOcr(m.id));
+    }
+    if (added.length === 1 && files.length === 1) { status('เพิ่มเข้าชั้นแล้ว'); openBook(added[0].id); }
+    else { if (!$('readerView').hidden) showLibrary(); else drawLibrary(); status(`เพิ่มเข้าชั้นแล้ว ${num(added.length)} เล่ม`); }
+  }
+  $('fileInput').onchange = e => { addFiles(e.target.files); e.target.value = ''; };
+
+  let coverTarget = null;
+  $('coverInput').onchange = async e => {
+    const f = e.target.files[0]; e.target.value = '';
+    const b = library.find(x => x.id === coverTarget);
+    if (!f || !b) return;
+    try {
+      b.cover = await imageToCover(f); b.customCover = true;
+      await books.put('meta', b); drawLibrary(); status('เปลี่ยนภาพปกแล้ว');
+    } catch { status('เปิดรูปนี้ไม่ได้ ลองใช้ไฟล์ JPG หรือ PNG'); }
+  };
+
+  /* ---------- OCR: scanned pages become text ----------
+     Free route: the Mac tool “แปลงสแกน.command” (Apple Vision) writes a .book.json that is added like a PDF.
+     In-page route: send page images to Claude (uses the viewer's Claude quota, claude.ai only). */
+  const hasClaude = () => !!(window.claude && claude.use);
+  let sampleP = null;
+  const getSample = () => sampleP || (sampleP = (window.claude && claude.use) ? claude.use('sample').catch(() => null) : Promise.resolve(null));
+  const ocrQueue = [];
+  let ocrActive = null;   // { id, ctl }
+  const STOP_MSG = {
+    unavailable: 'แปลงภาพสแกนได้เฉพาะตอนเปิดหน้านี้ใน claude.ai เท่านั้น',
+    images_unavailable: 'หน้าจอนี้ส่งรูปให้ Claude อ่านไม่ได้ ลองเปิดหน้านี้ใน claude.ai บนเบราว์เซอร์',
+    not_granted: 'ยังไม่ได้อนุญาตให้หน้านี้ใช้ Claude เปิดหน้านี้ใหม่แล้วกด “แปลงต่อ” อีกครั้งเพื่ออนุญาต',
+    sampling_disabled: 'บัญชีนี้ใช้ Claude อ่านภาพไม่ได้',
+    session_expired: 'หมดเวลาการเข้าสู่ระบบ กรุณาเข้าสู่ระบบ claude.ai ใหม่แล้วกด “แปลงต่อ”',
+    rate_limited: 'ใช้งานถี่เกินไปหรือโควตาเต็ม พักสักครู่แล้วกด “แปลงต่อ”',
+    upstream_error: 'การเชื่อมต่อขัดข้องหลายครั้ง กด “แปลงต่อ” เพื่อลองอีกครั้ง',
+    missing: 'ไม่พบไฟล์ต้นฉบับ ลบเล่มนี้แล้วเพิ่มไฟล์ PDF ใหม่อีกครั้ง'
+  };
+  const HARD_STOP = ['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed', 'images_unavailable', 'session_expired', 'rate_limited'];
+
+  function refreshOcr(b, t, i) {
+    const cm = document.querySelector(`.card[data-id="${b.id}"] .card-meta`);
+    if (cm) cm.textContent = cardMeta(b);
+    if (current && current.meta.id === b.id) {
+      if (t) current.pages = t.pages;
+      if (i != null) {
+        const old = page.querySelector(`.pg[data-i="${i}"]`);
+        if (old) old.replaceWith(pageSection(current.pages[i], i, current.pages.length, b));
+      } else page.querySelectorAll('.pg').forEach(sec => {
+        const k = +sec.dataset.i;
+        if (current.pages[k] === null) sec.replaceWith(pageSection(null, k, current.pages.length, b));
+      });
+      updateReaderMeta(b, current.pages);
+    }
+  }
+  function queueOcr(id) {
+    const b = library.find(x => x.id === id);
+    if (!b || !b.ocr || b.ocr.state === 'done') return;
+    if (ocrActive?.id !== id && !ocrQueue.includes(id)) ocrQueue.push(id);
+    if (ocrActive?.id !== id) { b.ocr.state = 'queued'; b.ocr.msg = ''; books.put('meta', b); refreshOcr(b); }
+    pumpOcr();
+  }
+  function stopOcr(id, quiet) {
+    const qi = ocrQueue.indexOf(id); if (qi >= 0) ocrQueue.splice(qi, 1);
+    if (ocrActive?.id === id) ocrActive.ctl.abort();
+    const b = library.find(x => x.id === id);
+    if (b?.ocr && b.ocr.state !== 'done') { b.ocr.state = 'paused'; b.ocr.msg = ''; if (!quiet) { books.put('meta', b); refreshOcr(b); } }
+  }
+  async function pumpOcr() {
+    if (ocrActive || !ocrQueue.length) return;
+    const id = ocrQueue.shift();
+    const ctl = new AbortController();
+    ocrActive = { id, ctl };
+    try { await ocrBook(id, ctl); }
+    catch (err) { console.error(err); const b = library.find(x => x.id === id); if (b?.ocr) { b.ocr.state = 'paused'; b.ocr.msg = 'แปลงไม่สำเร็จ กด “แปลงต่อ” เพื่อลองอีกครั้ง'; books.put('meta', b); refreshOcr(b); } }
+    finally { ocrActive = null; pumpOcr(); }
+  }
+  async function pageImage(pdf, n) {
+    const p = await pdf.getPage(n);
+    const v = p.getViewport({ scale: 1 });
+    const vp = p.getViewport({ scale: 1800 / Math.max(v.width, v.height) });
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cv.width, cv.height);
+    await p.render({ canvasContext: ctx, viewport: vp, intent: 'print' }).promise;   // 'print' keeps working in a background tab
+    return new Promise(res => cv.toBlob(res, 'image/jpeg', 0.88));
+  }
+  const ocrPrompt = (n, total) => `This image is page ${n} of ${total} of a scanned book that I own (mostly Thai text). Transcribe the printed text so I can read it as text.
+- Copy every word exactly as printed, in the original language and spelling. Do not translate, summarize, correct or add anything.
+- Put one blank line between paragraphs. Inside a paragraph, join the printed line breaks into one line (Thai words join with no space).
+- Keep chapter titles and headings as their own paragraph.
+- Leave out running headers, footers and page numbers.
+- If the page has no readable text (blank page, picture only), reply with exactly: [ว่าง]
+Reply with the transcription only, no notes or commentary.`;
+  function parseOcr(text) {
+    let t = text.trim().replace(/^```[a-z]*\n?|```$/g, '').trim();
+    if (!t || /^\[ว่าง\]$/.test(t)) return [];
+    return t.split(/\n\s*\n/).map(par => par.split('\n').map(l => l.trim()).filter(Boolean).reduce((acc, l) => {
+      if (!acc) return l;
+      return (isThai(acc.slice(-1)) && isThai(l[0])) ? acc + l : acc + ' ' + l;
+    }, '')).filter(Boolean);
+  }
+  async function ocrBook(id, ctl) {
+    const b = library.find(x => x.id === id);
+    if (!b?.ocr) return;
+    const pause = code => { b.ocr.state = 'paused'; b.ocr.msg = STOP_MSG[code] || STOP_MSG.upstream_error; books.put('meta', b); refreshOcr(b); };
+    b.ocr.state = 'running'; b.ocr.msg = ''; refreshOcr(b);
+    const sample = await getSample();
+    if (!sample) return pause('unavailable');
+    const lim = await sample.limits().catch(() => null);
+    if (!lim?.images) return pause('images_unavailable');
+    const [rec, t] = await Promise.all([books.get('pdf', id), books.get('text', id)]);
+    if (!rec || !t) return pause('missing');
+    const bytes = rec.data || (rec.blob && await rec.blob.arrayBuffer());
+    if (!bytes || !bytes.byteLength) return pause('missing');
+    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(bytes.slice(0)), isEvalSupported: false }).promise;
+    const todo = t.pages.map((p, i) => p === null ? i : -1).filter(i => i >= 0);
+    b.ocr.failed = [];
+    await books.put('meta', b); refreshOcr(b, t);
+    let stopCode = null, errStreak = 0;
+    const worker = async () => {
+      while (todo.length && !stopCode && !ctl.signal.aborted) {
+        const i = todo.shift();
+        try {
+          const img = await pageImage(pdf, i + 1);
+          const { text } = await sample(ocrPrompt(i + 1, pdf.numPages), { images: img, signal: ctl.signal });
+          t.pages[i] = parseOcr(text);
+          errStreak = 0;
+        } catch (e) {
+          const code = e?.code;
+          if (code === 'cancelled' || ctl.signal.aborted) return;
+          if (HARD_STOP.includes(code)) { stopCode = code; return; }
+          b.ocr.failed.push(i);
+          if (++errStreak >= 3) { stopCode = 'upstream_error'; return; }
+          refreshOcr(b, t, i);
+          continue;
+        }
+        b.ocr.done = b.ocr.total - t.pages.filter(p => p === null).length;
+        await books.put('text', t); await books.put('meta', b);
+        refreshOcr(b, t, i);
+      }
+    };
+    await Promise.all([worker(), worker()]);
+    if (ctl.signal.aborted) return;
+    if (stopCode) return pause(stopCode);
+    if (b.ocr.failed.length) {
+      b.ocr.state = 'paused';
+      b.ocr.msg = `แปลงไม่สำเร็จ ${num(b.ocr.failed.length)} หน้า กด “แปลงต่อ” เพื่อลองหน้าเหล่านั้นอีกครั้ง`;
+      await books.put('meta', b); refreshOcr(b);
+      return;
+    }
+    b.ocr.state = 'done'; b.ocr.msg = '';
+    await books.put('meta', b); await books.del('pdf', id);
+    refreshOcr(b);
+    status(`แปลง “${b.title}” เป็นข้อความครบแล้ว`);
+  }
+
+  // ask before spending the viewer's Claude usage
+  function askOcr(list) {
+    const pages = list.reduce((a, m) => a + m.ocr.total, 0);
+    $('ocrAskText').textContent = list.length === 1
+      ? `“${list[0].title}” มี ${num(pages)} หน้าที่เป็นภาพสแกน ต้องแปลงเป็นข้อความก่อนจึงจะอ่านได้ มี 2 ทาง`
+      : `หนังสือ ${num(list.length)} เล่มมีหน้าที่เป็นภาพสแกนรวม ${num(pages)} หน้า ต้องแปลงเป็นข้อความก่อนจึงจะอ่านได้ มี 2 ทาง`;
+    $('ocrClaude').hidden = $('ocrClaudeNote').hidden = !hasClaude();
+    $('ocrModal').hidden = false;
+    $('ocrLater').focus();
+    return new Promise(res => {
+      const done = v => { $('ocrModal').hidden = true; $('ocrClaude').onclick = $('ocrLater').onclick = null; res(v); };
+      $('ocrClaude').onclick = () => done(true);
+      $('ocrLater').onclick = () => done(false);
+    });
+  }
+
+  // drag & drop anywhere
+  let dragDepth = 0;
+  addEventListener('dragenter', e => { if ([...e.dataTransfer.types].includes('Files')) { dragDepth++; $('drop').hidden = false; } });
+  addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; $('drop').hidden = true; } });
+  addEventListener('dragover', e => e.preventDefault());
+  addEventListener('drop', e => { e.preventDefault(); dragDepth = 0; $('drop').hidden = true; addFiles(e.dataTransfer.files); });
+
+  /* ---------- shelf from GitHub (books/ next to this page, written by ./novel) ---------- */
+  const bookUrl = f => 'books/' + encodeURIComponent(f);
+  async function syncRemoteShelf() {
+    if (!/^https?:$/.test(location.protocol)) return;
+    let idx;
+    try { const r = await fetch('books/index.json', { cache: 'no-cache' }); if (!r.ok) return; idx = await r.json(); } catch { return; }
+    if (idx?.format !== 'reader-shelf/1' || !Array.isArray(idx.books)) return;
+    const seen = new Set();
+    for (const e of idx.books) {
+      if (!e?.file) continue;
+      const id = 'repo:' + e.file; seen.add(id);
+      const cover = e.cover ? bookUrl(e.cover) : null;
+      let m = library.find(b => b.id === id);
+      if (!m) {
+        m = { id, key: id, remote: e.file, title: e.title || e.file, cover, pdfCover: cover, customCover: false,
+              numPages: e.numPages || 0, added: Date.parse(e.updated) || Date.now(), lastRead: 0, progress: 0, version: e.updated };
+        library.push(m);
+      } else {
+        if (m.version !== e.updated) { m.version = e.updated; await books.del('text', id); }   // re-scanned: fetch fresh text
+        m.title = e.title || m.title; m.numPages = e.numPages || m.numPages;
+        m.pdfCover = cover; if (!m.customCover) m.cover = cover;
+      }
+      await books.put('meta', m);
+    }
+    for (const b of [...library]) if (b.remote && !seen.has(b.id)) {
+      library = library.filter(x => x !== b);
+      await books.del('meta', b.id); await books.del('text', b.id);
+    }
+    drawLibrary();
+  }
+  async function fetchRemoteBook(meta) {
+    status('กำลังโหลดหนังสือ…', true);
+    try {
+      const r = await fetch(bookUrl(meta.remote));
+      if (!r.ok) throw new Error(r.status);
+      const b = await r.json();
+      const pages = (b.pages || []).map(p => Array.isArray(p) ? p.map(x => String(x).trim()).filter(Boolean) : []);
+      const t = { id: meta.id, pages };
+      await books.put('text', t);
+      $('status').hidden = true;
+      return t;
+    } catch { status('โหลดหนังสือไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองอีกครั้ง'); return null; }
+  }
+
+  /* ---------- start ---------- */
+  apply();
+  drawLibrary();
+  (async () => {
+    if (!(await dbp)) status('เบราว์เซอร์นี้ไม่อนุญาตให้เก็บข้อมูล หนังสือที่เพิ่มจะหายเมื่อปิดหน้า');
+    try { library = (await books.all()) || []; } catch { library = []; }
+    for (const b of library) if (b.ocr && (b.ocr.state === 'running' || b.ocr.state === 'queued')) { b.ocr.state = 'paused'; b.ocr.msg = ''; books.put('meta', b); }
+    // bring over the single book saved by the earlier version of this page
+    const old = store.get('reader.book', null);
+    if (old && old.pages && !library.some(b => b.key === old.key)) {
+      const id = newId();
+      const meta = { id, key: old.key, title: old.title, cover: null, pdfCover: null, customCover: false,
+        numPages: old.pages.length, added: Date.now(), lastRead: 0, progress: store.get('reader.pos', {})[old.key] || 0 };
+      try { await books.put('text', { id, pages: old.pages }); await books.put('meta', meta); library.push(meta); } catch {}
+      try { localStorage.removeItem('reader.book'); } catch {}
+    }
+    drawLibrary();
+    syncRemoteShelf();
+  })();
+})();
+</script>
