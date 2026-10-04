@@ -374,6 +374,11 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
 .modal-card p { margin: 0; line-height: 1.65; }
 .modal-note { font-size: 13px; color: var(--muted); }
 .modal-note b { color: var(--fg); font-weight: 600; }
+.field-input { width: 100%; font: inherit; color: var(--fg); background: var(--bg); border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.field-input.small { font-size: 13px; color: var(--muted); padding: 6px 10px; }
+.field-input:focus { outline: none; border-color: var(--accent); }
+.modal-steps a { color: var(--accent-ink); }
+.link-btn { border: 0; background: none; color: var(--muted); text-decoration: underline; padding: 4px 8px; }
 .modal-steps { text-align: left; margin: 4px 0 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.6; }
 .modal-steps b { color: var(--fg); font-weight: 600; }
 .modal-steps code { font-family: var(--font-ui); background: var(--accent-soft); padding: 1px 6px; border-radius: 6px; font-size: 13px; }
@@ -430,6 +435,10 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
       <button class="btn-soft" id="libMode" title="สลับโหมดสี" aria-label="สลับโหมดสี">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg>
         <span id="libModeName">สว่าง</span>
+      </button>
+      <button class="btn-soft" id="ghBtn" title="แชร์หนังสือขึ้นชั้นออนไลน์ให้ทุกอุปกรณ์เห็น" aria-label="ชั้นออนไลน์" hidden>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 8.5a4 4 0 0 1-.5 9.5z"/><path d="M12 11v6M9.5 13.5 12 11l2.5 2.5"/></svg>
+        <span class="btn-label">ชั้นออนไลน์</span>
       </button>
       <button class="btn-soft" id="lockBtn" title="ล็อกเว็บ ต้องใส่รหัสใหม่ครั้งหน้า" aria-label="ล็อกเว็บ">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
@@ -568,14 +577,38 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
     <h2 id="ocrAskTitle">เล่มนี้เป็นภาพสแกน</h2>
     <p id="ocrAskText"></p>
     <ol class="modal-steps">
-      <li><b>แปลงฟรีบนเครื่อง Mac</b> (แนะนำ เร็วและไม่ใช้ Claude): ใส่ไฟล์ PDF ในโฟลเดอร์ <code>สแกน</code> ดับเบิลคลิก <code>แปลงสแกน.command</code> แล้วเพิ่มไฟล์ <code>.book.json</code> ที่ได้เข้าชั้น ข้อความจะเติมเข้าเล่มนี้เอง</li>
-      <li id="ocrClaudeNote"><b>หรือให้ Claude อ่านในหน้านี้</b>: ช้ากว่า (หน้าละราวครึ่งนาที) และใช้โควตา Claude ของคุณ</li>
+      <li><b>แปลงในเครื่องนี้</b> (ฟรี ใช้ได้ทุกอุปกรณ์): หน้าละ 1–3 วินาที ครั้งแรกต้องโหลดตัวอ่านภาษาไทยราว 13 MB ระหว่างแปลงอ่านหน้าที่เสร็จแล้วไปก่อนได้</li>
+      <li id="ocrClaudeNote"><b>ให้ Claude อ่าน</b>: แม่นที่สุดสำหรับสแกนไม่ชัด แต่ช้ากว่าและใช้โควตา Claude ของคุณ</li>
+      <li><b>บน Mac</b>: <code>./novel scan</code> ใช้ Apple Vision แม่นและเร็ว เหมาะกับเล่มหนา</li>
     </ol>
     <div class="modal-actions">
-      <button class="btn-cute" id="ocrLater">เข้าใจแล้ว</button>
+      <button class="btn-cute" id="ocrStart">แปลงเลย (ฟรี)</button>
       <button class="btn-soft" id="ocrClaude">ให้ Claude อ่าน</button>
     </div>
+    <button class="link-btn" id="ocrLater">ไว้ทีหลัง</button>
   </div>
+</div>
+
+<div class="modal" id="ghModal" hidden>
+  <form class="modal-card" id="ghForm" role="dialog" aria-modal="true" aria-labelledby="ghTitle" autocomplete="off">
+    <div class="cat-spot"><img src="assets/cat-lean.webp" alt=""></div>
+    <h2 id="ghTitle">ชั้นออนไลน์</h2>
+    <p>เชื่อมอุปกรณ์นี้กับ GitHub แล้วหนังสือที่เพิ่มจากที่นี่จะถูกเข้ารหัสและขึ้นชั้นให้ทุกอุปกรณ์เห็น ต้องทำครั้งเดียวต่ออุปกรณ์</p>
+    <ol class="modal-steps">
+      <li>เปิด <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">สร้างกุญแจบน GitHub</a> (Fine-grained token)</li>
+      <li>Repository access เลือก <b>Only select repositories</b> → repo ของเว็บนี้</li>
+      <li>Permissions → Repository → <b>Contents: Read and write</b> แล้วกด Generate</li>
+      <li>คัดลอกกุญแจมาวางด้านล่าง</li>
+    </ol>
+    <input type="password" class="field-input" id="ghToken" placeholder="github_pat_…" aria-label="กุญแจ GitHub" autocomplete="off">
+    <input type="text" class="field-input small" id="ghRepo" aria-label="repo" spellcheck="false">
+    <p class="modal-note" id="ghMsg" role="status"></p>
+    <div class="modal-actions">
+      <button type="submit" class="btn-cute">บันทึก</button>
+      <button type="button" class="btn-soft" id="ghClose">ปิด</button>
+    </div>
+    <button type="button" class="link-btn" id="ghForget" hidden>เลิกเชื่อมต่ออุปกรณ์นี้</button>
+  </form>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -824,10 +857,16 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
     };
     const open = b.ocr && b.ocr.state !== 'done';
     const busy = open && (b.ocr.state === 'running' || b.ocr.state === 'queued');
-    const ocr = el('button', '', busy ? 'หยุดให้ Claude อ่าน' : 'ให้ Claude อ่านหน้าสแกน');
-    ocr.hidden = !open || (!busy && !hasClaude());
-    ocr.onclick = () => { closeMenus(); busy ? stopOcr(b.id) : queueOcr(b.id); };
-    m.append(ocr, cov, reset, del);
+    const ocr = el('button', '', busy ? 'หยุดแปลงข้อความ' : 'แปลงหน้าสแกนต่อ (ฟรี)');
+    ocr.hidden = !open;
+    ocr.onclick = () => { closeMenus(); busy ? stopOcr(b.id) : queueOcr(b.id, 'paddle'); };
+    const ocrC = el('button', '', 'ให้ Claude อ่านหน้าสแกน');
+    ocrC.hidden = !open || busy || !hasClaude();
+    ocrC.onclick = () => { closeMenus(); queueOcr(b.id, 'claude'); };
+    const share = el('button', '', 'แชร์ขึ้นชั้นออนไลน์');
+    share.hidden = b.remote || open || !canShare();
+    share.onclick = () => { closeMenus(); shareBook(b); };
+    m.append(ocr, ocrC, share, cov, reset, del);
     btn.closest('.card').append(m);
     cov.focus();
   }
@@ -928,8 +967,8 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
     if (paras === null) {
       const failed = meta.ocr?.failed?.includes(i);
       const running = meta.ocr?.state === 'running' || meta.ocr?.state === 'queued';
-      sec.append(el('p', 'pending', failed ? 'Claude อ่านหน้านี้ไม่สำเร็จ ลองอีกครั้งจากแถบด้านบน หรือใช้ตัวแปลงบน Mac'
-        : running ? 'หน้านี้เป็นภาพสแกน กำลังรอ Claude อ่าน…' : 'หน้านี้เป็นภาพสแกน ยังไม่ได้แปลงเป็นข้อความ'));
+      sec.append(el('p', 'pending', failed ? 'แปลงหน้านี้ไม่สำเร็จ กด “แปลงต่อ” ด้านบนเพื่อลองอีกครั้ง'
+        : running ? 'หน้านี้เป็นภาพสแกน กำลังรอแปลงเป็นข้อความ…' : 'หน้านี้เป็นภาพสแกน ยังไม่ได้แปลงเป็นข้อความ'));
     } else paras.forEach(t => sec.append(el('p', '', t)));
     return sec;
   }
@@ -942,10 +981,10 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
     if (bn.hidden) return;
     const busy = o.state === 'running' || o.state === 'queued';
     $('ocrBannerText').textContent = busy
-      ? `Claude กำลังอ่านหน้าสแกน ${num(o.done)}/${num(o.total)} หน้า อ่านหน้าที่เสร็จแล้วไปก่อนได้เลย`
-      : (o.msg || `มีหน้าสแกนที่ยังไม่เป็นข้อความ ${num(o.total - o.done)} หน้า แปลงด้วย “แปลงสแกน.command” บน Mac แล้วเพิ่มไฟล์ .book.json ที่ได้${hasClaude() ? ' หรือให้ Claude อ่าน' : ''}`);
-    $('ocrBannerBtn').hidden = !busy && !hasClaude();
-    $('ocrBannerBtn').textContent = busy ? 'หยุด' : 'ให้ Claude อ่าน';
+      ? (o.msg || `${o.engine === 'claude' ? 'Claude กำลังอ่านหน้าสแกน' : 'กำลังแปลงหน้าสแกนเป็นข้อความ'} ${num(o.done)}/${num(o.total)} หน้า อ่านหน้าที่เสร็จแล้วไปก่อนได้เลย`)
+      : (o.msg || `มีหน้าสแกนที่ยังไม่เป็นข้อความ ${num(o.total - o.done)} หน้า`);
+    $('ocrBannerBtn').hidden = false;
+    $('ocrBannerBtn').textContent = busy ? 'หยุด' : 'แปลงต่อ';
     $('ocrBannerBtn').onclick = () => busy ? stopOcr(meta.id) : queueOcr(meta.id);
     $('ocrBannerBar').style.width = (o.total ? o.done / o.total * 100 : 0).toFixed(1) + '%';
   }
@@ -1159,8 +1198,10 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
     if (scanned.length) {
       scanned.forEach(m => { m.ocr.asked = true; books.put('meta', m); });
       $('status').hidden = true;
-      if (await askOcr(scanned)) scanned.forEach(m => queueOcr(m.id));
+      const engine = await askOcr(scanned);
+      if (engine) scanned.forEach(m => queueOcr(m.id, engine));
     }
+    if (canShare()) setTimeout(() => shareAll(added.filter(m => !m.remote && !(m.ocr && m.ocr.state !== 'done'))), 600);
     if (added.length === 1 && files.length === 1) { status('เพิ่มเข้าชั้นแล้ว'); openBook(added[0].id); }
     else { if (!$('readerView').hidden) showLibrary(); else drawLibrary(); status(`เพิ่มเข้าชั้นแล้ว ${num(added.length)} เล่ม`); }
   }
@@ -1178,8 +1219,9 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
   };
 
   /* ---------- OCR: scanned pages become text ----------
-     Free route: the Mac tool “แปลงสแกน.command” (Apple Vision) writes a .book.json that is added like a PDF.
-     In-page route: send page images to Claude (uses the viewer's Claude quota, claude.ai only). */
+     "paddle": PaddleOCR in this browser (free, any device; models load from Hugging Face).
+     "claude": send page images to Claude (uses the viewer's Claude quota, claude.ai only).
+     The Mac tool (./novel scan, Apple Vision) is a third, offline route. */
   const hasClaude = () => !!(window.claude && claude.use);
   let sampleP = null;
   const getSample = () => sampleP || (sampleP = (window.claude && claude.use) ? claude.use('sample').catch(() => null) : Promise.resolve(null));
@@ -1193,7 +1235,8 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
     session_expired: 'หมดเวลาการเข้าสู่ระบบ กรุณาเข้าสู่ระบบ claude.ai ใหม่แล้วกด “แปลงต่อ”',
     rate_limited: 'ใช้งานถี่เกินไปหรือโควตาเต็ม พักสักครู่แล้วกด “แปลงต่อ”',
     upstream_error: 'การเชื่อมต่อขัดข้องหลายครั้ง กด “แปลงต่อ” เพื่อลองอีกครั้ง',
-    missing: 'ไม่พบไฟล์ต้นฉบับ ลบเล่มนี้แล้วเพิ่มไฟล์ PDF ใหม่อีกครั้ง'
+    missing: 'ไม่พบไฟล์ต้นฉบับ ลบเล่มนี้แล้วเพิ่มไฟล์ PDF ใหม่อีกครั้ง',
+    paddle_unavailable: 'โหลดตัวอ่านภาษาไทยไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วกด “แปลงต่อ” (หน้านี้บน claude.ai ใช้ตัวอ่านในเครื่องไม่ได้ ให้ใช้เว็บ GitHub หรือ Claude แทน)'
   };
   const HARD_STOP = ['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed', 'images_unavailable', 'session_expired', 'rate_limited'];
 
@@ -1212,9 +1255,10 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
       updateReaderMeta(b, current.pages);
     }
   }
-  function queueOcr(id) {
+  function queueOcr(id, engine) {
     const b = library.find(x => x.id === id);
     if (!b || !b.ocr || b.ocr.state === 'done') return;
+    b.ocr.engine = engine || b.ocr.engine || 'paddle';
     if (ocrActive?.id !== id && !ocrQueue.includes(id)) ocrQueue.push(id);
     if (ocrActive?.id !== id) { b.ocr.state = 'queued'; b.ocr.msg = ''; books.put('meta', b); refreshOcr(b); }
     pumpOcr();
@@ -1234,15 +1278,148 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
     catch (err) { console.error(err); const b = library.find(x => x.id === id); if (b?.ocr) { b.ocr.state = 'paused'; b.ocr.msg = 'แปลงไม่สำเร็จ กด “แปลงต่อ” เพื่อลองอีกครั้ง'; books.put('meta', b); refreshOcr(b); } }
     finally { ocrActive = null; pumpOcr(); }
   }
-  async function pageImage(pdf, n) {
+  // ---- in-page OCR: PaddleOCR PP-OCRv5 (Thai) on ONNX Runtime Web — free, runs on this device ----
+  const ORT = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/';
+  const HF = 'https://huggingface.co/PaddlePaddle/';
+  const PADDLE = {
+    det: HF + 'PP-OCRv5_mobile_det_onnx/resolve/main/inference.onnx',
+    rec: HF + 'th_PP-OCRv5_mobile_rec_onnx/resolve/main/inference.onnx',
+    dict: HF + 'th_PP-OCRv5_mobile_rec_onnx/resolve/main/inference.yml'
+  };
+  let paddleP = null;
+  const loadScript = src => new Promise((res, rej) => {
+    const sc = document.createElement('script'); sc.src = src; sc.onload = res; sc.onerror = rej; document.head.append(sc);
+  });
+  async function cachedFetch(url, as) {
+    // keep the ~13 MB of models in the browser cache so later visits start at once
+    let r = null;
+    try { const c = await caches.open('mmr-ocr-v1'); r = await c.match(url); if (!r) { r = await fetch(url); if (r.ok) await c.put(url, r.clone()); } }
+    catch { r = await fetch(url); }
+    if (!r.ok) throw new Error('model ' + r.status);
+    return as === 'text' ? r.text() : r.arrayBuffer();
+  }
+  function getPaddle() {
+    if (paddleP) return paddleP;
+    paddleP = (async () => {
+      if (!window.ort) await loadScript(ORT + 'ort.min.js');
+      ort.env.wasm.wasmPaths = ORT;
+      const [detBuf, recBuf, yml] = await Promise.all([cachedFetch(PADDLE.det), cachedFetch(PADDLE.rec), cachedFetch(PADDLE.dict, 'text')]);
+      const [det, rec] = await Promise.all([ort.InferenceSession.create(detBuf), ort.InferenceSession.create(recBuf)]);
+      const lines = yml.split('\n'), i0 = lines.findIndex(l => /character_dict:/.test(l));
+      const dict = [];
+      for (let i = i0 + 1; i < lines.length; i++) {
+        const m = lines[i].match(/^\s*- (.*)$/); if (!m) break;
+        let v = m[1];
+        if (v.startsWith("'") && v.endsWith("'")) v = v.slice(1, -1).replace(/''/g, "'");
+        else if (v.startsWith('"')) v = JSON.parse(v);
+        dict.push(v);
+      }
+      return { det, rec, chars: ['', ...dict, ' '] };   // CTC blank first, space last
+    })();
+    paddleP.catch(() => { paddleP = null; });
+    return paddleP;
+  }
+  function toTensor(cv, w, h, mean, std) {   // BGR, CHW, normalised
+    const px = cv.getContext('2d').getImageData(0, 0, w, h).data, n = w * h, t = new Float32Array(3 * n);
+    for (let p = 0; p < n; p++) {
+      const bgr = [px[p * 4 + 2], px[p * 4 + 1], px[p * 4]];
+      for (let c = 0; c < 3; c++) t[c * n + p] = (bgr[c] / 255 - mean[c]) / std[c];
+    }
+    return new ort.Tensor('float32', t, [1, 3, h, w]);
+  }
+  async function paddlePage(P, page) {
+    const W = page.width, H = page.height;
+    // 1. find text boxes
+    const sc = Math.min(1, 1280 / Math.max(W, H));
+    const dw = Math.max(32, Math.round(W * sc / 32) * 32), dh = Math.max(32, Math.round(H * sc / 32) * 32);
+    const dc = document.createElement('canvas'); dc.width = dw; dc.height = dh;
+    dc.getContext('2d').drawImage(page, 0, 0, dw, dh);
+    const dout = await P.det.run({ [P.det.inputNames[0]]: toTensor(dc, dw, dh, [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]) });
+    const prob = dout[P.det.outputNames[0]].data;
+    const seen = new Uint8Array(dw * dh), boxes = [];
+    for (let s = 0; s < dw * dh; s++) {
+      if (seen[s] || prob[s] <= 0.3) continue;
+      let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1, sum = 0, n = 0; const st = [s]; seen[s] = 1;
+      while (st.length) {
+        const q = st.pop(), x = q % dw, y = (q / dw) | 0; sum += prob[q]; n++;
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+        if (x > 0 && !seen[q - 1] && prob[q - 1] > 0.3) { seen[q - 1] = 1; st.push(q - 1); }
+        if (x < dw - 1 && !seen[q + 1] && prob[q + 1] > 0.3) { seen[q + 1] = 1; st.push(q + 1); }
+        if (y > 0 && !seen[q - dw] && prob[q - dw] > 0.3) { seen[q - dw] = 1; st.push(q - dw); }
+        if (y < dh - 1 && !seen[q + dw] && prob[q + dw] > 0.3) { seen[q + dw] = 1; st.push(q + dw); }
+      }
+      if (n < 12 || sum / n < 0.6) continue;
+      const bw = x1 - x0 + 1, bh = y1 - y0 + 1, d = bw * bh * 1.5 / (2 * (bw + bh));   // DB "unclip"
+      boxes.push({ x0: Math.max(0, (x0 - d) * W / dw), y0: Math.max(0, (y0 - d) * H / dh),
+                   x1: Math.min(W, (x1 + 1 + d) * W / dw), y1: Math.min(H, (y1 + 1 + d) * H / dh) });
+    }
+    // 2. read each box
+    const lines = [];
+    for (const b of boxes) {
+      const bw = b.x1 - b.x0, bh = b.y1 - b.y0;
+      if (bw < 6 || bh < 6) continue;
+      const rh = 48, rw = Math.min(3200, Math.max(16, Math.ceil(rh * bw / bh)));
+      const rc = document.createElement('canvas'); rc.width = rw; rc.height = rh;
+      rc.getContext('2d').drawImage(page, b.x0, b.y0, bw, bh, 0, 0, rw, rh);
+      const ro = await P.rec.run({ [P.rec.inputNames[0]]: toTensor(rc, rw, rh, [0.5, 0.5, 0.5], [0.5, 0.5, 0.5]) });
+      const o = ro[P.rec.outputNames[0]], T = o.dims[1], C = o.dims[2], data = o.data;
+      let text = '', prev = -1, conf = 0, cnt = 0;
+      for (let k = 0; k < T; k++) {
+        let best = 0, bv = -1e9;
+        for (let c = 0; c < C; c++) { const v = data[k * C + c]; if (v > bv) { bv = v; best = c; } }
+        if (best !== prev && best !== 0) { text += P.chars[best] ?? ''; conf += bv; cnt++; }
+        prev = best;
+      }
+      text = text.trim();
+      if (text && cnt && conf / cnt >= 0.5) lines.push({ text, x0: b.x0, x1: b.x1, top: b.y0, h: bh });
+    }
+    return linesToParas(lines);
+  }
+  // order the boxes into printed lines, then lines into paragraphs (same rules as the Mac tool)
+  function linesToParas(boxes) {
+    boxes.sort((a, b) => (a.top + a.h / 2) - (b.top + b.h / 2));
+    const rows = [];
+    for (const b of boxes) {
+      const r = rows[rows.length - 1];
+      if (r && Math.abs((r.top + r.h / 2) - (b.top + b.h / 2)) < Math.min(r.h, b.h) * 0.5) r.parts.push(b), r.top = Math.min(r.top, b.top), r.h = Math.max(r.h, b.h);
+      else rows.push({ top: b.top, h: b.h, parts: [b] });
+    }
+    const hMed = rows.map(r => r.h).sort((a, b) => a - b)[rows.length >> 1] || 0;
+    const lines = rows.map(r => {
+      r.parts.sort((a, b) => a.x0 - b.x0);
+      return { text: r.parts.map(p => p.text).join(' '), x0: r.parts[0].x0, x1: r.parts[r.parts.length - 1].x1, top: r.top, h: r.h };
+    }).filter(l => l.h > hMed * 0.45 && !/^[\d๐-๙\s\-–—.|]+$/.test(l.text));   // drop specks and page numbers
+    if (!lines.length) return [];
+    const gaps = []; for (let i = 1; i < lines.length; i++) gaps.push(lines[i].top - lines[i - 1].top);
+    const sg = gaps.filter(g => g > 0).sort((a, b) => a - b), typical = sg[sg.length >> 2] || 0;
+    const left = lines.map(l => l.x0).sort((a, b) => a - b)[lines.length >> 2];
+    const right = lines.map(l => l.x1).sort((a, b) => a - b)[(lines.length * 3) >> 2];
+    const paras = []; let cur = lines[0].text;
+    for (let i = 1; i < lines.length; i++) {
+      const p = lines[i - 1], l = lines[i];
+      const bigGap = typical && l.top - p.top > typical * 1.5;
+      const indented = l.x0 - left > l.h * 0.8;
+      const prevShort = p.x1 < right - (right - left) * 0.15;
+      if (bigGap || indented || (prevShort && l.x0 - left > l.h * 0.3)) { paras.push(cur); cur = l.text; }
+      else if (isThai(cur.slice(-1)) && isThai(l.text[0])) cur += l.text;
+      else cur += ' ' + l.text;
+    }
+    paras.push(cur);
+    return paras;
+  }
+  async function pageCanvas(pdf, n, longSide) {
     const p = await pdf.getPage(n);
     const v = p.getViewport({ scale: 1 });
-    const vp = p.getViewport({ scale: 1800 / Math.max(v.width, v.height) });
+    const vp = p.getViewport({ scale: longSide / Math.max(v.width, v.height) });
     const cv = document.createElement('canvas');
     cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
-    const ctx = cv.getContext('2d');
+    const ctx = cv.getContext('2d', { willReadFrequently: true });
     ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cv.width, cv.height);
     await p.render({ canvasContext: ctx, viewport: vp, intent: 'print' }).promise;   // 'print' keeps working in a background tab
+    return cv;
+  }
+  async function pageImage(pdf, n) {
+    const cv = await pageCanvas(pdf, n, 1800);
     return new Promise(res => cv.toBlob(res, 'image/jpeg', 0.88));
   }
   const ocrPrompt = (n, total) => `This image is page ${n} of ${total} of a scanned book that I own (mostly Thai text). Transcribe the printed text so I can read it as text.
@@ -1265,10 +1442,18 @@ Reply with the transcription only, no notes or commentary.`;
     if (!b?.ocr) return;
     const pause = code => { b.ocr.state = 'paused'; b.ocr.msg = STOP_MSG[code] || STOP_MSG.upstream_error; books.put('meta', b); refreshOcr(b); };
     b.ocr.state = 'running'; b.ocr.msg = ''; refreshOcr(b);
-    const sample = await getSample();
-    if (!sample) return pause('unavailable');
-    const lim = await sample.limits().catch(() => null);
-    if (!lim?.images) return pause('images_unavailable');
+    const usePaddle = b.ocr.engine !== 'claude';
+    let sample = null, P = null;
+    if (usePaddle) {
+      b.ocr.msg = 'กำลังเตรียมตัวอ่านภาษาไทย (ครั้งแรกโหลดราว 13 MB)…'; refreshOcr(b);
+      try { P = await getPaddle(); } catch (e) { console.error(e); return pause('paddle_unavailable'); }
+      b.ocr.msg = '';
+    } else {
+      sample = await getSample();
+      if (!sample) return pause('unavailable');
+      const lim = await sample.limits().catch(() => null);
+      if (!lim?.images) return pause('images_unavailable');
+    }
     const [rec, t] = await Promise.all([books.get('pdf', id), books.get('text', id)]);
     if (!rec || !t) return pause('missing');
     const bytes = rec.data || (rec.blob && await rec.blob.arrayBuffer());
@@ -1282,9 +1467,15 @@ Reply with the transcription only, no notes or commentary.`;
       while (todo.length && !stopCode && !ctl.signal.aborted) {
         const i = todo.shift();
         try {
-          const img = await pageImage(pdf, i + 1);
-          const { text } = await sample(ocrPrompt(i + 1, pdf.numPages), { images: img, signal: ctl.signal });
-          t.pages[i] = parseOcr(text);
+          if (usePaddle) {
+            const paras = await paddlePage(P, await pageCanvas(pdf, i + 1, 2000));
+            if (ctl.signal.aborted) { todo.unshift(i); return; }
+            t.pages[i] = paras;
+          } else {
+            const img = await pageImage(pdf, i + 1);
+            const { text } = await sample(ocrPrompt(i + 1, pdf.numPages), { images: img, signal: ctl.signal });
+            t.pages[i] = parseOcr(text);
+          }
           errStreak = 0;
         } catch (e) {
           const code = e?.code;
@@ -1300,7 +1491,7 @@ Reply with the transcription only, no notes or commentary.`;
         refreshOcr(b, t, i);
       }
     };
-    await Promise.all([worker(), worker()]);
+    await Promise.all(usePaddle ? [worker()] : [worker(), worker()]);
     if (ctl.signal.aborted) return;
     if (stopCode) return pause(stopCode);
     if (b.ocr.failed.length) {
@@ -1313,23 +1504,148 @@ Reply with the transcription only, no notes or commentary.`;
     await books.put('meta', b); await books.del('pdf', id);
     refreshOcr(b);
     status(`แปลง “${b.title}” เป็นข้อความครบแล้ว`);
+    if (canShare()) setTimeout(() => shareBook(b), 1200);
   }
 
   // ask before spending the viewer's Claude usage
   function askOcr(list) {
     const pages = list.reduce((a, m) => a + m.ocr.total, 0);
     $('ocrAskText').textContent = list.length === 1
-      ? `“${list[0].title}” มี ${num(pages)} หน้าที่เป็นภาพสแกน ต้องแปลงเป็นข้อความก่อนจึงจะอ่านได้ มี 2 ทาง`
-      : `หนังสือ ${num(list.length)} เล่มมีหน้าที่เป็นภาพสแกนรวม ${num(pages)} หน้า ต้องแปลงเป็นข้อความก่อนจึงจะอ่านได้ มี 2 ทาง`;
+      ? `“${list[0].title}” มี ${num(pages)} หน้าที่เป็นภาพสแกน แปลงเป็นข้อความก่อนจึงจะอ่านได้`
+      : `หนังสือ ${num(list.length)} เล่มมีหน้าที่เป็นภาพสแกนรวม ${num(pages)} หน้า แปลงเป็นข้อความก่อนจึงจะอ่านได้`;
     $('ocrClaude').hidden = $('ocrClaudeNote').hidden = !hasClaude();
     $('ocrModal').hidden = false;
-    $('ocrLater').focus();
+    $('ocrStart').focus();
     return new Promise(res => {
-      const done = v => { $('ocrModal').hidden = true; $('ocrClaude').onclick = $('ocrLater').onclick = null; res(v); };
-      $('ocrClaude').onclick = () => done(true);
-      $('ocrLater').onclick = () => done(false);
+      const done = v => { $('ocrModal').hidden = true; $('ocrStart').onclick = $('ocrClaude').onclick = $('ocrLater').onclick = null; res(v); };
+      $('ocrStart').onclick = () => done('paddle');
+      $('ocrClaude').onclick = () => done('claude');
+      $('ocrLater').onclick = () => done(null);
     });
   }
+
+  /* ---------- online shelf: share books to GitHub from any device ----------
+     The book is encrypted here with the site key and written to books/ through the GitHub API
+     with this device's own access token. ./novel on the Mac pulls these into library/. */
+  const GH_STORE = 'mmr.github';
+  const ghConf = () => { try { return JSON.parse(localStorage.getItem(GH_STORE) || 'null'); } catch { return null; } };
+  const onWebsite = () => /^https?:$/.test(location.protocol) && !/claude|anthropic/.test(location.hostname);
+  const canShare = () => !!(siteKey && onWebsite() && ghConf()?.token);
+  function repoGuess() {
+    const m = location.hostname.match(/^([^.]+)\.github\.io$/i), repo = location.pathname.split('/').filter(Boolean)[0];
+    return m && repo && !/\.html?$/.test(repo) ? { owner: m[1], repo } : { owner: 'impresotewich-bit', repo: 'novel-reader' };
+  }
+  const b64bytes = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode(...u8.subarray(i, i + 0x8000)); return btoa(s); };
+  async function gh(path, opts = {}, conf = ghConf()) {
+    return fetch(`https://api.github.com/repos/${conf.owner}/${conf.repo}/${path}`, {
+      ...opts, headers: { Authorization: `Bearer ${conf.token}`, Accept: 'application/vnd.github+json', ...(opts.body ? { 'Content-Type': 'application/json' } : {}) }
+    });
+  }
+  const ghPath = p => p.split('/').map(encodeURIComponent).join('/');
+  async function ghGet(path) {
+    const r = await gh(`contents/${ghPath(path)}?ref=main&t=${Date.now()}`);
+    if (r.status === 404) return null;
+    if (!r.ok) throw Object.assign(new Error('github'), { status: r.status });
+    return r.json();
+  }
+  async function ghPut(path, bytes, message, sha) {
+    const r = await gh(`contents/${ghPath(path)}`, { method: 'PUT', body: JSON.stringify({ message, content: b64bytes(bytes), branch: 'main', ...(sha ? { sha } : {}) }) });
+    if (!r.ok) throw Object.assign(new Error('github'), { status: r.status });
+  }
+  async function sealBytes(bytes) {
+    const key = await crypto.subtle.importKey('raw', await crypto.subtle.exportKey('raw', siteKey), { name: 'AES-GCM' }, false, ['encrypt']);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, bytes));
+    const out = new Uint8Array(12 + ct.length); out.set(iv); out.set(ct, 12);
+    return out;
+  }
+  async function opaqueId(name) {   // same as the Mac tool: first 8 bytes of SHA-256(name), hex
+    const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(name)));
+    return [...h.slice(0, 8)].map(x => x.toString(16).padStart(2, '0')).join('');
+  }
+  function bookName(meta) {
+    let k = meta.key || '';
+    k = k.replace(/^book:/, '').replace(/:\d+$/, '').replace(/\.book\.json$|\.json$|\.pdf$/i, '');
+    return (k || meta.title).replace(/[\/\\:]/g, '-').trim();
+  }
+  const sharing = new Set();
+  async function shareBook(meta, quiet) {
+    if (!canShare() || meta.remote || meta.sample || sharing.has(meta.id)) return false;
+    if (meta.ocr && meta.ocr.state !== 'done') return false;
+    const t = await books.get('text', meta.id);
+    if (!t || t.pages.some(p => p === null)) return false;
+    sharing.add(meta.id);
+    status(`กำลังแชร์ “${meta.title}” ขึ้นชั้นออนไลน์…`, true);
+    try {
+      const name = bookName(meta), id = await opaqueId(name), updated = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+      const enc = new TextEncoder();
+      const book = { format: 'reader-book/1', title: meta.title, source: name + '.pdf', numPages: t.pages.length, updated, pages: t.pages };
+      const old = await ghGet(`books/${id}.book.enc`);
+      await ghPut(`books/${id}.book.enc`, await sealBytes(enc.encode(JSON.stringify(book))), `เพิ่มหนังสือจากเว็บ: ${id}`, old?.sha);
+      let hasCover = false;
+      if (meta.pdfCover?.startsWith('data:image/')) {
+        const oldC = await ghGet(`books/${id}.cover.enc`);
+        await ghPut(`books/${id}.cover.enc`, await sealBytes(b64dec(meta.pdfCover.split(',')[1])), `ปกหนังสือ: ${id}`, oldC?.sha);
+        hasCover = true;
+      }
+      for (let attempt = 0; ; attempt++) {   // the shelf index may change under us: re-read and retry
+        const f = await ghGet('books/index.enc');
+        let idx = { format: 'reader-shelf/2', books: [] };
+        if (f?.content) idx = JSON.parse(new TextDecoder().decode(await unseal(siteKey, b64dec(f.content.replace(/\s/g, '')))));
+        idx.books = idx.books.filter(e => e.id !== id);
+        idx.books.push({ id, name, title: meta.title, source: name + '.pdf', numPages: t.pages.length, updated, ...(hasCover ? { cover: true } : {}) });
+        idx.books.sort((a, b) => String(a.name || a.title).localeCompare(String(b.name || b.title), 'th'));
+        try { await ghPut('books/index.enc', await sealBytes(enc.encode(JSON.stringify(idx))), `ชั้นหนังสือ: เพิ่ม ${id}`, f?.sha); break; }
+        catch (e) { if (attempt >= 2 || ![409, 422].includes(e.status)) throw e; }
+      }
+      // this device now reads the shared copy (keeps reading progress)
+      const rid = 'repo:' + id;
+      const shared = { ...meta, id: rid, key: 'repo:' + name + '.pdf', remote: id, version: updated, pendingSince: Date.now(), ocr: undefined };
+      await books.put('text', { id: rid, pages: t.pages }); await books.put('meta', shared);
+      await books.del('meta', meta.id); await books.del('text', meta.id); await books.del('pdf', meta.id);
+      library = library.filter(b => b.id !== meta.id && b.id !== rid); library.push(shared);
+      if (current?.meta.id === meta.id) current.meta = shared;
+      if (!$('libView').hidden) drawLibrary();
+      if (!quiet) status(`แชร์ “${meta.title}” แล้ว อุปกรณ์อื่นจะเห็นในอีกราว 1–2 นาที`);
+      return true;
+    } catch (e) {
+      console.error(e);
+      status(e.status === 401 || e.status === 403 || e.status === 404
+        ? 'กุญแจ GitHub ใช้ไม่ได้ (หมดอายุหรือสิทธิ์ไม่พอ) ตั้งใหม่ที่ปุ่ม “ชั้นออนไลน์”'
+        : 'แชร์ขึ้นชั้นออนไลน์ไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่จากเมนู ⋯ ของเล่มนี้');
+      return false;
+    } finally { sharing.delete(meta.id); }
+  }
+  async function shareAll(list) { for (const m of list) await shareBook(m); }
+
+  // settings dialog
+  function openGh() {
+    const c = ghConf(), g = repoGuess();
+    $('ghToken').value = ''; $('ghToken').placeholder = c?.token ? 'เชื่อมต่อแล้ว (ใส่ใหม่เพื่อเปลี่ยน)' : 'github_pat_…';
+    $('ghRepo').value = `${c?.owner || g.owner}/${c?.repo || g.repo}`;
+    $('ghForget').hidden = !c?.token;
+    $('ghMsg').textContent = c?.token ? 'อุปกรณ์นี้แชร์หนังสือขึ้นชั้นออนไลน์ได้แล้ว' : '';
+    $('ghModal').hidden = false; $('ghToken').focus();
+  }
+  $('ghBtn').onclick = openGh;
+  $('ghClose').onclick = () => { $('ghModal').hidden = true; };
+  $('ghForget').onclick = () => { try { localStorage.removeItem(GH_STORE); } catch {} $('ghModal').hidden = true; status('เลิกเชื่อมต่อ GitHub บนอุปกรณ์นี้แล้ว'); };
+  $('ghForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const [owner, repo] = $('ghRepo').value.trim().split('/');
+    const token = $('ghToken').value.trim() || ghConf()?.token;
+    if (!owner || !repo || !token) { $('ghMsg').textContent = 'ใส่กุญแจและชื่อ repo ให้ครบก่อนนะ'; return; }
+    $('ghMsg').textContent = 'กำลังตรวจกุญแจ…';
+    try {
+      const r = await gh('', {}, { owner, repo, token });
+      const j = r.ok ? await r.json() : null;
+      if (!j?.permissions?.push) { $('ghMsg').textContent = r.ok ? 'กุญแจนี้อ่านได้แต่เขียนไม่ได้ ต้องให้สิทธิ์ Contents: Read and write' : 'กุญแจไม่ถูกต้อง หรือเข้าถึง repo นี้ไม่ได้'; return; }
+      localStorage.setItem(GH_STORE, JSON.stringify({ owner, repo, token }));
+      $('ghModal').hidden = true;
+      const local = library.filter(b => !b.remote && !b.sample).length;
+      status(local ? 'เชื่อมต่อแล้ว เล่มใหม่จะขึ้นชั้นออนไลน์เอง ส่วนเล่มที่มีอยู่แล้วแชร์ได้จากเมนู ⋯' : 'เชื่อมต่อแล้ว เล่มที่เพิ่มจากอุปกรณ์นี้จะขึ้นชั้นออนไลน์อัตโนมัติ');
+    } catch { $('ghMsg').textContent = 'ติดต่อ GitHub ไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่'; }
+  });
 
   // drag & drop anywhere
   let dragDepth = 0;
@@ -1425,7 +1741,8 @@ Reply with the transcription only, no notes or commentary.`;
       m.title = e.title || m.title; m.numPages = e.numPages || m.numPages;
       await books.put('meta', m);
     }
-    for (const b of [...library]) if (b.remote && !seen.has(b.id)) {
+    for (const b of library) if (seen.has(b.id) && b.pendingSince) { delete b.pendingSince; await books.put('meta', b); }
+    for (const b of [...library]) if (b.remote && !seen.has(b.id) && !(b.pendingSince > Date.now() - 15 * 60e3)) {
       library = library.filter(x => x !== b);
       await books.del('meta', b.id); await books.del('text', b.id);
     }
@@ -1449,6 +1766,7 @@ Reply with the transcription only, no notes or commentary.`;
   function unlock(key) {
     siteKey = key;
     $('gate').hidden = true; $('libView').hidden = false;
+    $('ghBtn').hidden = !(siteKey && onWebsite());
     if (started) return;
     started = true;
     start();

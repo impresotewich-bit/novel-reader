@@ -36,7 +36,14 @@ site_password() {
     echo "ยังไม่ได้ตั้งรหัสเว็บในเครื่องนี้ — ตั้งด้วย ./novel password" >&2; exit 1; }
 }
 
+sync_down() {  # get books other devices added on the website
+  [[ -n "$NOVEL_NO_PUSH" ]] && return
+  git rev-parse --git-dir >/dev/null 2>&1 || return
+  git pull -q --rebase --autostash 2>/dev/null || echo "ดึงข้อมูลล่าสุดจาก GitHub ไม่ได้ (ทำต่อด้วยข้อมูลในเครื่อง)" >&2
+}
+
 publish() {   # publish "<commit message>"
+  sync_down
   NOVEL_PASSWORD="$(site_password)" "$BIN" --seal "$LIB" "$BOOKS" "$VAULT"
   if [[ -n "$NOVEL_NO_PUSH" ]]; then echo "ข้ามการขึ้น GitHub (NOVEL_NO_PUSH)"; return; fi
   if ! git rev-parse --git-dir >/dev/null 2>&1; then echo "โฟลเดอร์นี้ยังไม่ได้เชื่อม GitHub" >&2; return; fi
@@ -61,6 +68,8 @@ case "$cmd" in
     (( ${#titles} )) && publish "เพิ่มหนังสือ: ${(j:, :)titles}"
     ;;
   list|ls)
+    build; sync_down
+    NOVEL_PASSWORD="$(site_password)" "$BIN" --seal "$LIB" "$BOOKS" "$VAULT" >/dev/null
     n=0
     for f in "$LIB"/*.book.json(N); do echo "  • ${${f:t}%.book.json}"; n=$((n+1)); done
     echo "รวม $n เล่ม"

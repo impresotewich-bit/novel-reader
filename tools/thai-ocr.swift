@@ -160,6 +160,14 @@ func deriveKey(_ pw: String, salt: Data, rounds: Int) -> SymmetricKey {
 
 func seal(_ data: Data, _ key: SymmetricKey) throws -> Data { try AES.GCM.seal(data, using: key).combined! }
 
+/// Write encrypted data, leaving the file alone when its content is unchanged (fresh nonces would
+/// otherwise rewrite every file and bloat the git history).
+func writeSealed(_ data: Data, to url: URL, _ key: SymmetricKey) throws {
+    if let old = try? Data(contentsOf: url), let box = try? AES.GCM.SealedBox(combined: old),
+       (try? AES.GCM.open(box, using: key)) == data { return }
+    try seal(data, key).write(to: url)
+}
+
 struct Vault { let salt: Data; let rounds: Int; let check: Data }
 
 func readVault(_ url: URL) throws -> Vault {
@@ -203,6 +211,8 @@ func sealLibrary(_ lib: URL, into out: URL, vaultURL: URL) throws {
     }
     let fm = FileManager.default
     try fm.createDirectory(at: out, withIntermediateDirectories: true)
+    try fm.createDirectory(at: lib, withIntermediateDirectories: true)
+    try adoptWebBooks(lib, from: out, key: key)
     let files = ((try? fm.contentsOfDirectory(at: lib, includingPropertiesForKeys: nil)) ?? [])
         .filter { $0.lastPathComponent.hasSuffix(".book.json") }.sorted { $0.lastPathComponent < $1.lastPathComponent }
     var entries: [[String: Any]] = []
@@ -212,21 +222,46 @@ func sealLibrary(_ lib: URL, into out: URL, vaultURL: URL) throws {
         guard let obj = try JSONSerialization.jsonObject(with: raw) as? [String: Any] else { continue }
         let name = String(f.lastPathComponent.dropLast(".book.json".count))
         let id = opaqueName(name)
-        try seal(raw, key).write(to: out.appendingPathComponent(id + ".book.enc")); keep.insert(id + ".book.enc")
-        var e: [String: Any] = ["id": id, "title": obj["title"] as? String ?? name, "source": obj["source"] as? String ?? "",
+        try writeSealed(raw, to: out.appendingPathComponent(id + ".book.enc"), key); keep.insert(id + ".book.enc")
+        var e: [String: Any] = ["id": id, "name": name, "title": obj["title"] as? String ?? name, "source": obj["source"] as? String ?? "",
                                 "numPages": obj["numPages"] as? Int ?? 0, "updated": obj["updated"] as? String ?? ""]
         let cover = lib.appendingPathComponent(name + ".cover.jpg")
         if let c = try? Data(contentsOf: cover) {
-            try seal(c, key).write(to: out.appendingPathComponent(id + ".cover.enc")); keep.insert(id + ".cover.enc"); e["cover"] = true
+            try writeSealed(c, to: out.appendingPathComponent(id + ".cover.enc"), key); keep.insert(id + ".cover.enc"); e["cover"] = true
         }
         entries.append(e)
     }
-    let index = try JSONSerialization.data(withJSONObject: ["format": "reader-shelf/2", "books": entries], options: [.withoutEscapingSlashes])
-    try seal(index, key).write(to: out.appendingPathComponent("index.enc"))
+    let index = try JSONSerialization.data(withJSONObject: ["format": "reader-shelf/2", "books": entries], options: [.withoutEscapingSlashes, .sortedKeys])
+    try writeSealed(index, to: out.appendingPathComponent("index.enc"), key)
     for f in (try? fm.contentsOfDirectory(at: out, includingPropertiesForKeys: nil)) ?? [] where !keep.contains(f.lastPathComponent) {
         try? fm.removeItem(at: f)   // books removed from the library, or old unencrypted files
     }
     print("ชั้นหนังสือบนเว็บมี \(entries.count) เล่ม (เข้ารหัสแล้ว)")
+}
+
+/// Books uploaded from the website are only in books/ (encrypted). Copy them into library/ so they
+/// survive the next seal, which rebuilds books/ from library/.
+func adoptWebBooks(_ lib: URL, from out: URL, key: SymmetricKey) throws {
+    let fm = FileManager.default
+    guard let sealed = try? Data(contentsOf: out.appendingPathComponent("index.enc")),
+          let plain = try? AES.GCM.open(AES.GCM.SealedBox(combined: sealed), using: key),
+          let idx = try JSONSerialization.jsonObject(with: plain) as? [String: Any],
+          let entries = idx["books"] as? [[String: Any]] else { return }
+    let local = Set(((try? fm.contentsOfDirectory(at: lib, includingPropertiesForKeys: nil)) ?? [])
+        .filter { $0.lastPathComponent.hasSuffix(".book.json") }
+        .map { opaqueName(String($0.lastPathComponent.dropLast(".book.json".count))) })
+    for e in entries {
+        guard let id = e["id"] as? String, !local.contains(id),
+              let name = (e["name"] as? String)?.replacingOccurrences(of: "/", with: "-"), opaqueName(name) == id,
+              let bookData = try? Data(contentsOf: out.appendingPathComponent(id + ".book.enc")),
+              let book = try? AES.GCM.open(AES.GCM.SealedBox(combined: bookData), using: key) else { continue }
+        try book.write(to: lib.appendingPathComponent(name + ".book.json"))
+        if let c = try? Data(contentsOf: out.appendingPathComponent(id + ".cover.enc")),
+           let cover = try? AES.GCM.open(AES.GCM.SealedBox(combined: c), using: key) {
+            try cover.write(to: lib.appendingPathComponent(name + ".cover.jpg"))
+        }
+        print("  ↓ รับเล่มที่เพิ่มจากเว็บ: \(e["title"] as? String ?? name)")
+    }
 }
 
 // ---- main ----
