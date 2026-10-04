@@ -595,6 +595,19 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
   </div>
 </div>
 
+<div class="modal" id="renameModal" hidden>
+  <form class="modal-card" id="renameForm" role="dialog" aria-modal="true" aria-labelledby="renameTitle">
+    <div class="cat-spot"><img src="assets/cat-sit.webp" alt=""></div>
+    <h2 id="renameTitle">แก้ไขชื่อหนังสือ</h2>
+    <input type="text" class="field-input" id="renameInput" maxlength="200" aria-label="ชื่อหนังสือ" autocomplete="off" required>
+    <p class="modal-note" id="renameNote"></p>
+    <div class="modal-actions">
+      <button type="submit" class="btn-cute" id="renameSave">บันทึก</button>
+      <button type="button" class="btn-soft" id="renameCancel">ยกเลิก</button>
+    </div>
+  </form>
+</div>
+
 <div class="modal" id="ghModal" hidden>
   <form class="modal-card" id="ghForm" role="dialog" aria-modal="true" aria-labelledby="ghTitle" autocomplete="off">
     <div class="cat-spot"><img src="assets/cat-lean.webp" alt=""></div>
@@ -847,6 +860,8 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
   function openMenu(btn, b) {
     closeMenus();
     const m = el('div', 'menu'); m.setAttribute('role', 'menu');
+    const ren = el('button', '', 'แก้ไขชื่อหนังสือ');
+    ren.onclick = () => { closeMenus(); askRename(b); };
     const cov = el('button', '', 'เปลี่ยนภาพปก');
     cov.onclick = () => { closeMenus(); coverTarget = b.id; $('coverInput').click(); };
     const reset = el('button', '', 'ใช้ปกจากหน้าแรกของ PDF');
@@ -877,7 +892,7 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
     const share = el('button', '', 'แชร์ขึ้นชั้นออนไลน์');
     share.hidden = b.remote || open || !canShare();
     share.onclick = () => { closeMenus(); shareBook(b); };
-    m.append(ocr, ocrC, share, cov, reset, del);
+    m.append(ocr, ocrC, share, ren, cov, reset, del);
     btn.closest('.card').append(m);
     cov.focus();
   }
@@ -1672,6 +1687,44 @@ Reply with the transcription only, no notes or commentary.`;
   }
   async function shareAll(list) { for (const m of list) await shareBook(m); }
 
+  // rename: shared books change the shelf index for every device; the Mac picks the new title up on its next ./novel run
+  let renameTarget = null;
+  function askRename(b) {
+    renameTarget = b;
+    $('renameInput').value = b.title;
+    $('renameNote').textContent = b.remote ? (canShare() ? 'ชื่อใหม่จะเปลี่ยนในทุกอุปกรณ์' : 'เล่มนี้อยู่บนชั้นออนไลน์ ต้องมีกุญแจร่วมก่อนจึงแก้ชื่อได้') : '';
+    $('renameSave').disabled = !!b.remote && !canShare();
+    $('renameModal').hidden = false;
+    $('renameInput').focus(); $('renameInput').select();
+  }
+  $('renameCancel').onclick = () => { $('renameModal').hidden = true; };
+  $('renameForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const b = renameTarget, title = $('renameInput').value.replace(/\s+/g, ' ').trim();
+    if (!b || !title) return;
+    $('renameModal').hidden = true;
+    if (title === b.title) return;
+    if (b.remote) {
+      status('กำลังเปลี่ยนชื่อ…', true);
+      try {
+        const updated = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+        let found = false;
+        await ghUpdateJson('books/index.enc', () => ({ format: 'reader-shelf/2', books: [] }), idx => {
+          const en = (idx.books || []).find(x => x.id === b.remote);
+          if (!en) return false;
+          found = true; en.title = title; en.updated = updated;
+        }, `แก้ชื่อหนังสือ: ${b.remote}`);
+        if (!found) { status('ไม่พบเล่มนี้บนชั้นออนไลน์แล้ว อาจถูกลบจากเครื่องอื่น'); return; }
+        b.version = updated;
+      } catch (err) { console.error(err); status('เปลี่ยนชื่อไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่'); return; }
+    }
+    b.title = title;
+    await books.put('meta', b);
+    if (current?.meta.id === b.id) { $('bookTitle').textContent = title; document.title = title + ' · Meaw Meaw Read'; }
+    drawLibrary();
+    status(b.remote ? `เปลี่ยนชื่อเป็น “${title}” แล้ว ทุกอุปกรณ์เห็นชื่อใหม่` : `เปลี่ยนชื่อเป็น “${title}” แล้ว`);
+  });
+
   // delete a shared book for every device (the Mac's library follows on its next ./novel run)
   async function unshareBook(meta) {
     if (!canShare() || !meta.remote) return false;
@@ -1848,7 +1901,9 @@ Reply with the transcription only, no notes or commentary.`;
               numPages: e.numPages || 0, added: Date.parse(e.updated) || Date.now(), lastRead: 0, progress: 0 };
         library.push(m);
       }
-      if (fresh) {
+      if (fresh && m.version && e.updated && m.title !== e.title && await books.get('text', id)) {
+        m.version = e.updated;   // only the title changed (renamed on another device): keep the text we have
+      } else if (fresh) {
         await books.del('text', id);   // new or re-scanned: fetch fresh text when opened
         if (e.cover) { try { m.pdfCover = await toDataUrl(await fetchSealed(`books/${e.id}.cover.enc`)); } catch {} }
         if (!m.customCover) m.cover = m.pdfCover;

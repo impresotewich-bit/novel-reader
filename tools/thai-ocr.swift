@@ -273,11 +273,21 @@ func sealLibrary(_ lib: URL, into out: URL, vaultURL: URL, drop: String? = nil) 
     }
     var entries: [[String: Any]] = []
     var keep = Set(["index.enc", "progress.enc"])
+    var oldEntries: [String: [String: Any]] = [:]
+    for e in (old?["books"] as? [[String: Any]]) ?? [] { if let id = e["id"] as? String { oldEntries[id] = e } }
     for f in files {
-        let raw = try Data(contentsOf: f)
-        guard let obj = try JSONSerialization.jsonObject(with: raw) as? [String: Any] else { continue }
+        var raw = try Data(contentsOf: f)
+        guard var obj = try JSONSerialization.jsonObject(with: raw) as? [String: Any] else { continue }
         let name = String(f.lastPathComponent.dropLast(".book.json".count))
         let id = opaqueName(name)
+        // renamed on the website after this copy was made: take the new title
+        if let oe = oldEntries[id], let t = oe["title"] as? String, let up = oe["updated"] as? String,
+           t != obj["title"] as? String, up > (obj["updated"] as? String ?? "") {
+            obj["title"] = t; obj["updated"] = up
+            raw = try JSONSerialization.data(withJSONObject: obj, options: [.withoutEscapingSlashes])
+            try raw.write(to: f)
+            print("  ✎ ชื่อใหม่จากเว็บ: \(t)")
+        }
         try writeSealed(raw, to: out.appendingPathComponent(id + ".book.enc"), key); keep.insert(id + ".book.enc")
         var e: [String: Any] = ["id": id, "name": name, "title": obj["title"] as? String ?? name, "source": obj["source"] as? String ?? "",
                                 "numPages": obj["numPages"] as? Int ?? 0, "updated": obj["updated"] as? String ?? ""]
