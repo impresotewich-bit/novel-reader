@@ -29,7 +29,7 @@
   --rose: #b97568;
   --wood: #e8cba6;
   --wood-edge: #cfa77c;
-  --spot: #fbf1e4;
+  --spot: #fbf1e4; --paw: rgba(190, 132, 84, .11);
   --danger: #b3412e;
   --shadow: 0 1px 2px rgba(90,55,30,.10), 0 8px 22px rgba(90,55,30,.10);
   --font-ui: "Anuphan", "Sarabun", system-ui, sans-serif;
@@ -43,39 +43,39 @@
   :root:not([data-theme="light"]) {
     --bg: #1f1915; --surface: #2a221d; --fg: #f1e4d4; --muted: #a8927f; --line: #3d322a;
     --accent: #eba465; --accent-ink: #f0b37c; --accent-soft: #3b2b1f; --on-accent: #2a180c;
-    --pink: #d99894; --rose: #c98a7c; --wood: #4a3a2d; --wood-edge: #2f251c; --spot: #f6ebdd; --danger: #e8846f;
+    --pink: #d99894; --rose: #c98a7c; --wood: #4a3a2d; --wood-edge: #2f251c; --spot: #f6ebdd; --paw: rgba(235, 190, 140, .06); --danger: #e8846f;
     --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 22px rgba(0,0,0,.35); color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #1f1915; --surface: #2a221d; --fg: #f1e4d4; --muted: #a8927f; --line: #3d322a;
   --accent: #eba465; --accent-ink: #f0b37c; --accent-soft: #3b2b1f; --on-accent: #2a180c;
-  --pink: #d99894; --rose: #c98a7c; --wood: #4a3a2d; --wood-edge: #2f251c; --spot: #f6ebdd; --danger: #e8846f;
+  --pink: #d99894; --rose: #c98a7c; --wood: #4a3a2d; --wood-edge: #2f251c; --spot: #f6ebdd; --paw: rgba(235, 190, 140, .06); --danger: #e8846f;
   --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 22px rgba(0,0,0,.35); color-scheme: dark;
 }
 /* Reader modes chosen inside the page win over the viewer theme */
 :root[data-mode="light"] {
   --bg: #fcf7f1; --surface: #fffdfa; --fg: #4a3427; --muted: #9a8270; --line: #ecdfcf;
   --accent: #e0914b; --accent-ink: #b5622a; --accent-soft: #fbe9d7; --on-accent: #3d2518;
-  --pink: #f3b4b0; --rose: #b97568; --wood: #e8cba6; --wood-edge: #cfa77c; --spot: #fbf1e4; --danger: #b3412e;
+  --pink: #f3b4b0; --rose: #b97568; --wood: #e8cba6; --wood-edge: #cfa77c; --spot: #fbf1e4; --paw: rgba(190, 132, 84, .11); --danger: #b3412e;
   --shadow: 0 1px 2px rgba(90,55,30,.10), 0 8px 22px rgba(90,55,30,.10); color-scheme: light;
 }
 :root[data-mode="dark"] {
   --bg: #1f1915; --surface: #2a221d; --fg: #f1e4d4; --muted: #a8927f; --line: #3d322a;
   --accent: #eba465; --accent-ink: #f0b37c; --accent-soft: #3b2b1f; --on-accent: #2a180c;
-  --pink: #d99894; --rose: #c98a7c; --wood: #4a3a2d; --wood-edge: #2f251c; --spot: #f6ebdd; --danger: #e8846f;
+  --pink: #d99894; --rose: #c98a7c; --wood: #4a3a2d; --wood-edge: #2f251c; --spot: #f6ebdd; --paw: rgba(235, 190, 140, .06); --danger: #e8846f;
   --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 22px rgba(0,0,0,.35); color-scheme: dark;
 }
 :root[data-mode="sepia"] {
   --bg: #f1e6cf; --surface: #f8efdc; --fg: #4a3b28; --muted: #8a7559; --line: #ddcca9;
   --accent: #c98a45; --accent-ink: #9a5b22; --accent-soft: #ead9b7; --on-accent: #3a2410;
-  --pink: #e6a9a0; --rose: #a8695a; --wood: #dcc097; --wood-edge: #bf9a6c; --spot: #f8efdc; --danger: #a83a24;
+  --pink: #e6a9a0; --rose: #a8695a; --wood: #dcc097; --wood-edge: #bf9a6c; --spot: #f8efdc; --paw: rgba(150, 100, 50, .11); --danger: #a83a24;
   --shadow: 0 1px 2px rgba(80,50,20,.15), 0 6px 18px rgba(80,50,20,.12); color-scheme: light;
 }
 :root[data-mode="night"] {
   --bg: #1c1712; --surface: #26201a; --fg: #d9c7a7; --muted: #8f7f66; --line: #3a3128;
   --accent: #d79a52; --accent-ink: #e2ad6c; --accent-soft: #3a2d1f; --on-accent: #22160a;
-  --pink: #c48c84; --rose: #b07c6c; --wood: #3f3226; --wood-edge: #2a2119; --spot: #efe2cc; --danger: #e0846a;
+  --pink: #c48c84; --rose: #b07c6c; --wood: #3f3226; --wood-edge: #2a2119; --spot: #efe2cc; --paw: rgba(215, 154, 82, .065); --danger: #e0846a;
   --shadow: 0 1px 2px rgba(0,0,0,.45), 0 8px 22px rgba(0,0,0,.4); color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -86,6 +86,16 @@ body {
   font-family: var(--font-ui); font-size: 15px;
   transition: background .25s, color .25s;
 }
+/* paw-print wallpaper: a fixed layer behind everything, tinted by --paw, hidden while reading */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: var(--paw);
+  -webkit-mask: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180"%3E%3Cg transform="translate%2836 40%29 rotate%28-18%29 scale%281.15%29"%3E%3Cellipse cx="0" cy="6" rx="9" ry="7.5"/%3E%3Cellipse cx="-10.5" cy="-4.5" rx="3.6" ry="4.6"/%3E%3Cellipse cx="-4" cy="-11" rx="3.6" ry="4.8"/%3E%3Cellipse cx="4" cy="-11" rx="3.6" ry="4.8"/%3E%3Cellipse cx="10.5" cy="-4.5" rx="3.6" ry="4.6"/%3E%3C/g%3E%3Cg transform="translate%28128 30%29 rotate%2822%29 scale%280.8%29"%3E%3Cellipse cx="0" cy="6" rx="9" ry="7.5"/%3E%3Cellipse cx="-10.5" cy="-4.5" rx="3.6" ry="4.6"/%3E%3Cellipse cx="-4" cy="-11" rx="3.6" ry="4.8"/%3E%3Cellipse cx="4" cy="-11" rx="3.6" ry="4.8"/%3E%3Cellipse cx="10.5" cy="-4.5" rx="3.6" ry="4.6"/%3E%3C/g%3E%3Cg transform="translate%2898 112%29 rotate%288%29 scale%281.0%29"%3E%3Cellipse cx="0" cy="6" rx="9" ry="7.5"/%3E%3Cellipse cx="-10.5" cy="-4.5" rx="3.6" ry="4.6"/%3E%3Cellipse cx="-4" cy="-11" rx="3.6" ry="4.8"/%3E%3Cellipse cx="4" cy="-11" rx="3.6" ry="4.8"/%3E%3Cellipse cx="10.5" cy="-4.5" rx="3.6" ry="4.6"/%3E%3C/g%3E%3Cg transform="translate%2826 140%29 rotate%28-32%29 scale%280.75%29"%3E%3Cellipse cx="0" cy="6" rx="9" ry="7.5"/%3E%3Cellipse cx="-10.5" cy="-4.5" rx="3.6" ry="4.6"/%3E%3Cellipse cx="-4" cy="-11" rx="3.6" ry="4.8"/%3E%3Cellipse cx="4" cy="-11" rx="3.6" ry="4.8"/%3E%3Cellipse cx="10.5" cy="-4.5" rx="3.6" ry="4.6"/%3E%3C/g%3E%3Cg transform="translate%28160 150%29 rotate%2830%29 scale%280.9%29"%3E%3Cellipse cx="0" cy="6" rx="9" ry="7.5"/%3E%3Cellipse cx="-10.5" cy="-4.5" rx="3.6" ry="4.6"/%3E%3Cellipse cx="-4" cy="-11" rx="3.6" ry="4.8"/%3E%3Cellipse cx="4" cy="-11" rx="3.6" ry="4.8"/%3E%3Cellipse cx="10.5" cy="-4.5" rx="3.6" ry="4.6"/%3E%3C/g%3E%3C/svg%3E') 0 0 / 180px 180px repeat;
+          mask: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180"%3E%3Cg transform="translate%2836 40%29 rotate%28-18%29 scale%281.15%29"%3E%3Cellipse cx="0" cy="6" rx="9" ry="7.5"/%3E%3Cellipse cx="-10.5" cy="-4.5" rx="3.6" ry="4.6"/%3E%3Cellipse cx="-4" cy="-11" rx="3.6" ry="4.8"/%3E%3Cellipse cx="4" cy="-11" rx="3.6" ry="4.8"/%3E%3Cellipse cx="10.5" cy="-4.5" rx="3.6" ry="4.6"/%3E%3C/g%3E%3Cg transform="translate%28128 30%29 rotate%2822%29 scale%280.8%29"%3E%3Cellipse cx="0" cy="6" rx="9" ry="7.5"/%3E%3Cellipse cx="-10.5" cy="-4.5" rx="3.6" ry="4.6"/%3E%3Cellipse cx="-4" cy="-11" rx="3.6" ry="4.8"/%3E%3Cellipse cx="4" cy="-11" rx="3.6" ry="4.8"/%3E%3Cellipse cx="10.5" cy="-4.5" rx="3.6" ry="4.6"/%3E%3C/g%3E%3Cg transform="translate%2898 112%29 rotate%288%29 scale%281.0%29"%3E%3Cellipse cx="0" cy="6" rx="9" ry="7.5"/%3E%3Cellipse cx="-10.5" cy="-4.5" rx="3.6" ry="4.6"/%3E%3Cellipse cx="-4" cy="-11" rx="3.6" ry="4.8"/%3E%3Cellipse cx="4" cy="-11" rx="3.6" ry="4.8"/%3E%3Cellipse cx="10.5" cy="-4.5" rx="3.6" ry="4.6"/%3E%3C/g%3E%3Cg transform="translate%2826 140%29 rotate%28-32%29 scale%280.75%29"%3E%3Cellipse cx="0" cy="6" rx="9" ry="7.5"/%3E%3Cellipse cx="-10.5" cy="-4.5" rx="3.6" ry="4.6"/%3E%3Cellipse cx="-4" cy="-11" rx="3.6" ry="4.8"/%3E%3Cellipse cx="4" cy="-11" rx="3.6" ry="4.8"/%3E%3Cellipse cx="10.5" cy="-4.5" rx="3.6" ry="4.6"/%3E%3C/g%3E%3Cg transform="translate%28160 150%29 rotate%2830%29 scale%280.9%29"%3E%3Cellipse cx="0" cy="6" rx="9" ry="7.5"/%3E%3Cellipse cx="-10.5" cy="-4.5" rx="3.6" ry="4.6"/%3E%3Cellipse cx="-4" cy="-11" rx="3.6" ry="4.8"/%3E%3Cellipse cx="4" cy="-11" rx="3.6" ry="4.8"/%3E%3Cellipse cx="10.5" cy="-4.5" rx="3.6" ry="4.6"/%3E%3C/g%3E%3C/svg%3E') 0 0 / 180px 180px repeat;
+  transition: opacity .3s;
+}
+body:has(#readerView:not([hidden]))::before { opacity: 0; }
+
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
 button, .btn {
@@ -2187,6 +2197,7 @@ Reply with the transcription only, no notes or commentary.`;
     if (key) unlock(key); else $('gatePw').focus();
   })();
   async function start() {
+    showReader();
     drawLibrary();
     if (!(await dbp)) status('เบราว์เซอร์นี้ไม่อนุญาตให้เก็บข้อมูล หนังสือที่เพิ่มจะหายเมื่อปิดหน้า');
     try { library = (await books.all()) || []; } catch { library = []; }
