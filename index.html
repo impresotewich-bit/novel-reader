@@ -1,4 +1,13 @@
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fcf7f1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Meaw Read">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="icon" type="image/png" href="assets/icon-192.png">
+<link rel="manifest" href="manifest.json">
 <title>Meaw Meaw Read</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -415,6 +424,103 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
   .btn-label { display: none; }
   .search { flex: 1 1 10rem; }
 }
+.pct, .fab { display: none; }
+
+/* ================= PHONE ================= */
+@media (max-width: 640px) {
+  body { font-size: 15.5px; -webkit-tap-highlight-color: transparent; }
+  button, .btn { min-height: 44px; }
+  input, select, textarea { font-size: 16px !important; }   /* stops iOS zooming into fields */
+
+  /* library */
+  .lib { padding: 12px 14px calc(110px + env(safe-area-inset-bottom, 0px)); gap: 26px; }
+  .topline { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 15; margin: -12px -14px 0; padding: 10px 14px;
+             background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(10px); }
+  .brand { font-size: 18px; white-space: nowrap; }
+  .top-actions { gap: 6px; }
+  .top-actions .btn-soft { width: 44px; height: 44px; padding: 0; justify-content: center; }
+  .top-actions .btn-label, #libModeName { display: none; }
+  .hero { border-radius: 22px; }
+  .hero-photo { aspect-ratio: 2.1 / 1; }
+  .hero-photo img { object-position: 50% 32%; }
+  .hero-text { padding: 16px 18px 20px; gap: 10px; }
+  .hello { font-size: 13px; }
+  .hero h1 { font-size: 25px; line-height: 1.35; }
+  .hero h1 br { display: none; }
+  .chip { font-size: 12.5px; padding: 5px 10px; }
+  .hero-actions .btn-cute { width: 100%; justify-content: center; min-height: 48px; font-size: 16px; }
+  .sec-head { margin-bottom: 14px; }
+  .sec-title { font-size: 19px; }
+  .search { width: 100%; }
+  .continue { grid-template-columns: 74px minmax(0, 1fr); gap: 14px; padding: 14px; border-radius: 20px; }
+  .continue .cover { width: 74px; }
+  .continue-title { font-size: 17px; }
+  .continue-info .btn-cute { padding: 8px 18px; min-height: 40px; }
+  .shelf { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 14px; row-gap: 22px; }
+  .stand { padding: 0 3px 11px; }
+  .stand::after { height: 11px; left: -9px; right: -9px; }
+  .card { gap: 8px; }
+  .card-title { font-size: 13px; line-height: 1.4; }
+  .card-meta { font-size: 11.5px; }
+  .more { min-height: 32px; padding: 2px 4px; }
+  .local-only { font-size: 10.5px; min-height: 0; }
+  .add-card { font-size: 12px; padding: 8px; }
+  .add-card .plus { width: 36px; height: 36px; }
+  .foot-cat { font-size: 12.5px; text-align: left; }
+  .fab { display: grid; place-items: center; position: fixed; z-index: 30;
+         right: 18px; bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+         width: 60px; height: 60px; border-radius: 50%; border: 0; padding: 0;
+         background: var(--accent); color: var(--on-accent); box-shadow: 0 4px 0 var(--accent-ink), var(--shadow); }
+  .fab[hidden] { display: none; }
+
+  /* menus and dialogs become bottom sheets */
+  .sheet-backdrop { position: fixed; inset: 0; z-index: 55; background: color-mix(in srgb, var(--fg) 30%, transparent); }
+  .menu { position: fixed; left: 0; right: 0; top: auto; bottom: 0; z-index: 60; min-width: 0;
+          border-radius: 22px 22px 0 0; padding: 10px 12px calc(14px + env(safe-area-inset-bottom, 0px)); gap: 4px;
+          animation: sheet-up .22s ease-out; }
+  .menu::before { content: ""; width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin: 2px auto 8px; }
+  .menu button { min-height: 50px; font-size: 16px; padding: 0 14px; }
+  .modal { place-items: end stretch; padding: 0; }
+  .modal-card { width: 100%; max-height: 92vh; overflow-y: auto; border-radius: 26px 26px 0 0;
+                padding: 18px 20px calc(20px + env(safe-area-inset-bottom, 0px)); animation: sheet-up .25s ease-out; }
+  .modal-card .cat-spot { width: 96px; height: 96px; }
+  .modal-actions { width: 100%; }
+  .modal-actions > * { flex: 1 1 0; justify-content: center; min-height: 48px; }
+  @keyframes sheet-up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  /* reader: slim top bar, toolbar at the thumb, hides while reading */
+  .bar { backdrop-filter: none; background: var(--bg); transition: transform .25s ease; }
+  .bar-inner { padding: 6px 10px; gap: 6px; flex-wrap: nowrap; }
+  #backBtn { width: 44px; padding: 0; justify-content: center; }
+  .book-title { font-size: 15px; }
+  .book-meta { font-size: 11.5px; }
+  .tools {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; width: auto;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 8px 14px calc(8px + env(safe-area-inset-bottom, 0px));
+    background: var(--surface); border-top: 1px solid var(--line); box-shadow: 0 -4px 16px rgba(60, 35, 15, .08);
+    transition: transform .25s ease;
+  }
+  .tools .btn-label { display: none; }
+  .size-group button { min-width: 54px; min-height: 44px; justify-content: center; }
+  #cycleMode, #settingsBtn { width: 48px; height: 44px; padding: 0; justify-content: center; }
+  .pct { display: block; flex: 1; text-align: center; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .panel { position: fixed; left: 0; right: 0; bottom: calc(61px + env(safe-area-inset-bottom, 0px)); z-index: 24;
+           max-height: 62vh; overflow-y: auto; grid-template-columns: 1fr; gap: 16px;
+           padding: 16px 18px 18px; background: var(--surface); border-top: 1px solid var(--line);
+           border-radius: 22px 22px 0 0; box-shadow: 0 -8px 24px rgba(60, 35, 15, .12); animation: sheet-up .2s ease-out; }
+  .modes { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .reader main { padding: 0 18px; }
+  .page { padding-block: 22px calc(110px + env(safe-area-inset-bottom, 0px)); }
+  .ocr-banner { margin-top: 14px; grid-template-columns: 44px minmax(0, 1fr); font-size: 13px; }
+  .ocr-banner .cat-spot { width: 44px; height: 44px; }
+  .ocr-banner .btn-soft { grid-column: 1 / -1; }
+  .to-top { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); right: 14px; }
+  .reader.immersive .bar { transform: translateY(-110%); }
+  .reader.immersive .tools { transform: translateY(110%); }
+  .reader.immersive .to-top { display: none; }
+  .status { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+}
 </style>
 
 <!-- ================= LIBRARY VIEW ================= -->
@@ -515,6 +621,7 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg>
           <span class="btn-label" id="modeName">สว่าง</span>
         </button>
+        <span class="pct" id="pctLabel" aria-live="off">0%</span>
         <button id="settingsBtn" aria-expanded="false" aria-controls="panel" title="ตั้งค่าการอ่าน">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
           <span class="btn-label">ตั้งค่า</span>
@@ -594,6 +701,11 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
     <button class="link-btn" id="ocrLater">ไว้ทีหลัง</button>
   </div>
 </div>
+
+<button class="fab" id="fab" aria-label="เพิ่มหนังสือ" hidden>
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+<div class="sheet-backdrop" id="sheetBackdrop" hidden></div>
 
 <div class="modal" id="renameModal" hidden>
   <form class="modal-card" id="renameForm" role="dialog" aria-modal="true" aria-labelledby="renameTitle">
@@ -830,8 +942,9 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
   let library = [];
   let current = null;   // { meta, pages }
 
-  function closeMenus() { document.querySelectorAll('.menu').forEach(m => m.remove()); }
+  function closeMenus() { document.querySelectorAll('.menu').forEach(m => m.remove()); $('sheetBackdrop').hidden = true; }
   document.addEventListener('click', e => { if (!e.target.closest('.menu, .more')) closeMenus(); });
+  $('sheetBackdrop').addEventListener('click', closeMenus);
 
   function timeAgo(t) {
     if (!t) return '';
@@ -894,6 +1007,7 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
     share.onclick = () => { closeMenus(); shareBook(b); };
     m.append(ocr, ocrC, share, ren, cov, reset, del);
     btn.closest('.card').append(m);
+    if (matchMedia('(max-width: 640px)').matches) $('sheetBackdrop').hidden = false;
     cov.focus();
   }
 
@@ -986,7 +1100,7 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
     saveProgress(true);
     pushProgress();
     current = null;
-    $('readerView').hidden = true; $('libView').hidden = false;
+    $('readerView').hidden = true; $('libView').hidden = false; $('fab').hidden = false;
     document.title = 'Meaw Meaw Read';
     drawLibrary();
     window.scrollTo(0, 0);
@@ -1045,7 +1159,8 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
     }
     current = { meta, pages };
     renderBook(meta, pages);
-    $('libView').hidden = true; $('readerView').hidden = false;
+    $('libView').hidden = true; $('readerView').hidden = false; $('fab').hidden = true;
+    $('readerView').classList.remove('immersive'); lastY = 0;
     $('panel').hidden = true; $('settingsBtn').setAttribute('aria-expanded', 'false');
     window.scrollTo(0, 0);
     requestAnimationFrame(() => {
@@ -1066,12 +1181,29 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
     const doIt = () => books.put('meta', current.meta);
     now ? doIt() : (saveTimer = setTimeout(doIt, 500));
   }
+  const phone = matchMedia('(max-width: 640px)');
+  let lastY = 0;
+  // phones: a tap on the text toggles the bars
+  page.addEventListener('click', e => {
+    if (!phone.matches || e.target.closest('button, a') || getSelection().toString()) return;
+    if (!$('panel').hidden) { $('panel').hidden = true; $('settingsBtn').setAttribute('aria-expanded', 'false'); return; }
+    $('readerView').classList.toggle('immersive');
+  });
+  $('fab').onclick = () => $('fileInput').click();
   function onScroll() {
     if ($('readerView').hidden) return;
     const doc = document.scrollingElement;
     const max = doc.scrollHeight - innerHeight;
     const r = max > 0 ? Math.min(1, doc.scrollTop / max) : 1;
     $('progressBar').style.width = (r * 100).toFixed(2) + '%';
+    $('pctLabel').textContent = Math.round(r * 100) + '%';
+    // phones: hide the bars while scrolling down, bring them back when scrolling up
+    if (phone.matches && $('panel').hidden) {
+      const y = doc.scrollTop, dy = y - lastY;
+      if (y < 60 || dy < -8) $('readerView').classList.remove('immersive');
+      else if (dy > 8) $('readerView').classList.add('immersive');
+      if (Math.abs(dy) > 8 || y < 60) lastY = y;
+    }
     $('toTop').hidden = doc.scrollTop < innerHeight;
     if (current && !current.meta.sample) { current.meta.progress = r; current.meta.lastRead = Date.now(); saveProgress(); if (current.meta.remote) progressDirty = true; }
   }
@@ -1936,7 +2068,7 @@ Reply with the transcription only, no notes or commentary.`;
   let started = false;
   function unlock(key) {
     siteKey = key;
-    $('gate').hidden = true; $('libView').hidden = false;
+    $('gate').hidden = true; $('libView').hidden = false; $('fab').hidden = false;
     $('ghBtn').hidden = !(siteKey && onWebsite());
     unlockSharedGh();
     if (started) return;
