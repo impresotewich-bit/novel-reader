@@ -141,25 +141,19 @@ button:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visi
 .brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 600; font-size: 18px; color: var(--accent-ink); }
 .brand svg { color: var(--pink); }
 
-/* Hero: two halves — the welcome card and แม่หมอ Meaw's fortune card */
-.hero-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: stretch; }
-@media (max-width: 860px) { .hero-split { grid-template-columns: 1fr; gap: 16px; } }
+/* Hero banners: text on the left, photo on the right (stacked on narrow screens).
+   Used by the welcome banner at the top and by แม่หมอ Meaw's card at the bottom. */
 .hero {
-  display: flex; flex-direction: column;
+  display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: stretch;
   background: var(--surface); border: 1px solid var(--line); border-radius: 28px; overflow: hidden; box-shadow: var(--shadow);
 }
-.hero-photo { position: relative; aspect-ratio: 16 / 9; flex: none; }
-.hero-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; }
-.hero-photo::after { /* soft fade into the text below */
-  content: ""; position: absolute; inset: auto 0 0 0; height: 32%;
-  background: linear-gradient(0deg, var(--surface), transparent);
-}
-.hero-text { padding: 6px clamp(20px, 3vw, 32px) clamp(22px, 3vw, 30px); display: flex; flex-direction: column; gap: 12px; min-width: 0; flex: 1; }
+.hero-text { padding: clamp(24px, 4vw, 44px); display: flex; flex-direction: column; justify-content: center; gap: 14px; min-width: 0; }
 .hello { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
 .hero h1, .hero h2 {
-  font-family: var(--font-display); font-weight: 700; font-size: clamp(26px, 2.9vw, 36px);
+  font-family: var(--font-display); font-weight: 700; font-size: clamp(28px, 4.4vw, 44px);
   line-height: 1.7; margin: 0; padding-block: .1em; text-wrap: balance; color: var(--fg);   /* room for Thai tone marks above and vowels below */
 }
+.hero h2 { font-size: clamp(26px, 3.6vw, 38px); }
 .hero h1 em, .hero h2 em { font-style: normal; color: var(--accent-ink); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip {
@@ -167,7 +161,18 @@ button:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visi
   background: var(--accent-soft); color: var(--fg); font-size: 13.5px; font-variant-numeric: tabular-nums;
 }
 .chip svg { color: var(--accent); }
-.hero-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: auto; padding-top: 4px; }
+.hero-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.hero-photo { position: relative; min-height: 260px; }
+.hero-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; }
+.hero-photo::after { /* soft fade into the text side */
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 22%;
+  background: linear-gradient(90deg, var(--surface), transparent);
+}
+@media (max-width: 720px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero-photo { order: -1; min-height: 0; aspect-ratio: 16 / 10; }
+  .hero-photo::after { inset: auto 0 0 0; width: auto; height: 30%; background: linear-gradient(0deg, var(--surface), transparent); }
+}
 
 /* แม่หมอ Meaw */
 .hero-fortune .hero-photo img { object-position: 50% 40%; }
@@ -520,7 +525,7 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
   .hero { border-radius: 22px; }
   .hero-photo { aspect-ratio: 2.1 / 1; }
   .hero-welcome .hero-photo img { object-position: 50% 32%; }
-  .hero-text { padding: 4px 18px 20px; gap: 10px; }
+  .hero-text { padding: 12px 18px 20px; gap: 10px; }
   .hello { font-size: 13px; }
   .hero h1, .hero h2 { font-size: 25px; line-height: 1.7; }
   .hero h1 br, .hero h2 br { display: none; }
@@ -640,41 +645,20 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
     </div>
   </div>
 
-  <div class="hero-split">
-    <header class="hero hero-welcome">
-      <div class="hero-photo"><img src="assets/cat-nook.webp" alt="ลูกแมวสามสีใส่แว่นกำลังนั่งอ่านหนังสือบนเบาะนุ่ม"></div>
-      <div class="hero-text">
-        <span class="hello" id="hello">สวัสดีจ้า</span>
-        <h1>วันนี้อยากอ่าน<br><em>เรื่องอะไรดีน้า</em></h1>
-        <div class="chips" id="chips"></div>
-        <div class="hero-actions">
-          <label class="btn btn-cute" for="fileInput" tabindex="0" id="addBtn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-            เพิ่มหนังสือ (PDF)
-          </label>
-        </div>
+  <header class="hero hero-welcome">
+    <div class="hero-text">
+      <span class="hello" id="hello">สวัสดีจ้า</span>
+      <h1>วันนี้อยากอ่าน<br><em>เรื่องอะไรดีน้า</em></h1>
+      <div class="chips" id="chips"></div>
+      <div class="hero-actions">
+        <label class="btn btn-cute" for="fileInput" tabindex="0" id="addBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          เพิ่มหนังสือ (PDF)
+        </label>
       </div>
-    </header>
-
-    <section class="hero hero-fortune" id="fortune" aria-labelledby="fortuneTitle">
-      <div class="hero-photo"><img src="assets/cat-fortune.webp" alt="แม่หมอ Meaw ลูกแมวสามสีสวมหมวกแม่มด ถือไพ่ทาโรต์ข้างลูกแก้ว"></div>
-      <div class="hero-text">
-        <span class="hello fortune-eyebrow">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
-          แม่หมอ Meaw นักพยากรณ์
-        </span>
-        <h2 id="fortuneTitle">เปิดไพ่ทาโรต์<br><em id="fortuneWho">ทำนายดวง</em></h2>
-        <p class="fortune-lead" id="fortuneLead">ไพ่ทาโรต์ 22 ใบ เลือกเรื่องที่อยากรู้ แล้วให้แม่หมอเปิดไพ่ อดีต ปัจจุบัน อนาคต ให้ดู</p>
-        <button type="button" class="fortune-last" id="fortuneLast" hidden></button>
-        <div class="hero-actions">
-          <button type="button" class="btn-mystic" id="fortuneBtn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.4 6.9H22l-6 4.5 2.3 7.1L12 16.1 5.7 20.5 8 13.4 2 8.9h7.6z"/></svg>
-            ดูดวงไพ่ทาโรต์
-          </button>
-        </div>
-      </div>
-    </section>
-  </div>
+    </div>
+    <div class="hero-photo"><img src="assets/cat-nook.webp" alt="ลูกแมวสามสีใส่แว่นกำลังนั่งอ่านหนังสือบนเบาะนุ่ม"></div>
+  </header>
 
   <div id="continueWrap" hidden>
     <div class="sec-head"><h2 class="sec-title"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="12" cy="16" rx="5.2" ry="4.3"/><ellipse cx="5.6" cy="10.4" rx="2.1" ry="2.6"/><ellipse cx="9.4" cy="6.4" rx="2.1" ry="2.7"/><ellipse cx="14.6" cy="6.4" rx="2.1" ry="2.7"/><ellipse cx="18.4" cy="10.4" rx="2.1" ry="2.6"/></svg>อ่านค้างไว้</h2></div>
@@ -695,6 +679,25 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
     </div>
     <div class="shelf" id="shelf"></div>
   </div>
+
+  <section class="hero hero-fortune" id="fortune" aria-labelledby="fortuneTitle">
+    <div class="hero-text">
+      <span class="hello fortune-eyebrow">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+        แม่หมอ Meaw นักพยากรณ์
+      </span>
+      <h2 id="fortuneTitle">เปิดไพ่ทาโรต์<br><em id="fortuneWho">ทำนายดวง</em></h2>
+      <p class="fortune-lead" id="fortuneLead">ไพ่ทาโรต์ 22 ใบ เลือกเรื่องที่อยากรู้ แล้วให้แม่หมอเปิดไพ่ อดีต ปัจจุบัน อนาคต ให้ดู</p>
+      <button type="button" class="fortune-last" id="fortuneLast" hidden></button>
+      <div class="hero-actions">
+        <button type="button" class="btn-mystic" id="fortuneBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.4 6.9H22l-6 4.5 2.3 7.1L12 16.1 5.7 20.5 8 13.4 2 8.9h7.6z"/></svg>
+          ดูดวงไพ่ทาโรต์
+        </button>
+      </div>
+    </div>
+    <div class="hero-photo"><img src="assets/cat-fortune.webp" alt="แม่หมอ Meaw ลูกแมวสามสีสวมหมวกแม่มด ถือไพ่ทาโรต์ข้างลูกแก้ว"></div>
+  </section>
 
   <div class="foot-cat" id="footCat" hidden>
     <div class="cat-spot"><img src="assets/cat-sit.webp" alt=""></div>
