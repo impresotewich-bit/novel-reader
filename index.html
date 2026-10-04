@@ -425,6 +425,16 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
   .search { flex: 1 1 10rem; }
 }
 .pct, .fab { display: none; }
+.who-btn { gap: 8px; }
+.who-dot { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+           background: var(--accent); color: var(--on-accent); font-weight: 700; font-size: 13px; line-height: 1; flex: none; }
+.who-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; width: 100%; }
+.who-chip { border-radius: 999px; padding: 6px 14px 6px 6px; gap: 8px; font-size: 15px; }
+.who-chip.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.who-chip .who-dot { width: 32px; height: 32px; font-size: 15px; }
+.who-new { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+.who-new .field-input { flex: 1 1 12rem; min-width: 0; }
+.who-new .btn-cute { flex: 1 0 auto; justify-content: center; }
 
 /* ================= PHONE ================= */
 @media (max-width: 640px) {
@@ -436,9 +446,10 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
   .lib { padding: 12px 14px calc(110px + env(safe-area-inset-bottom, 0px)); gap: 26px; }
   .topline { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 15; margin: -12px -14px 0; padding: 10px 14px;
              background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(10px); }
-  .brand { font-size: 18px; white-space: nowrap; }
-  .top-actions { gap: 6px; }
-  .top-actions .btn-soft { width: 44px; height: 44px; padding: 0; justify-content: center; }
+  .brand { font-size: 17px; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .top-actions { gap: 6px; flex: none; }
+  .top-actions .btn-soft { width: 42px; height: 42px; min-height: 42px; padding: 0; justify-content: center; }
+  .top-actions #ghBtn.shared { display: none; }   /* nothing to set up once the shared key exists */
   .top-actions .btn-label, #libModeName { display: none; }
   .hero { border-radius: 22px; }
   .hero-photo { aspect-ratio: 2.1 / 1; }
@@ -547,6 +558,9 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
       <button class="btn-soft" id="libMode" title="สลับโหมดสี" aria-label="สลับโหมดสี">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg>
         <span id="libModeName">สว่าง</span>
+      </button>
+      <button class="btn-soft who-btn" id="whoBtn" title="เลือกคนอ่าน" aria-label="เปลี่ยนคนอ่าน">
+        <span class="who-dot" id="whoInitial">?</span><span class="btn-label" id="whoName">เลือกคนอ่าน</span>
       </button>
       <button class="btn-soft" id="ghBtn" title="แชร์หนังสือขึ้นชั้นออนไลน์ให้ทุกอุปกรณ์เห็น" aria-label="ชั้นออนไลน์" hidden>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 8.5a4 4 0 0 1-.5 9.5z"/><path d="M12 11v6M9.5 13.5 12 11l2.5 2.5"/></svg>
@@ -706,6 +720,20 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
   <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
 </button>
 <div class="sheet-backdrop" id="sheetBackdrop" hidden></div>
+
+<div class="modal" id="whoModal" hidden>
+  <form class="modal-card" id="whoForm" role="dialog" aria-modal="true" aria-labelledby="whoTitle" autocomplete="off">
+    <div class="cat-spot"><img src="assets/cat-lie.webp" alt=""></div>
+    <h2 id="whoTitle">ใครกำลังอ่านอยู่?</h2>
+    <p id="whoText"></p>
+    <div class="who-list" id="whoList"></div>
+    <div class="who-new">
+      <input type="text" class="field-input" id="whoNew" maxlength="30" placeholder="ชื่อใหม่ เช่น แม่, น้องมิว" aria-label="ชื่อคนอ่าน">
+      <button type="submit" class="btn-cute">เริ่มอ่าน</button>
+    </div>
+    <button type="button" class="link-btn" id="whoClose">ปิด</button>
+  </form>
+</div>
 
 <div class="modal" id="renameModal" hidden>
   <form class="modal-card" id="renameForm" role="dialog" aria-modal="true" aria-labelledby="renameTitle">
@@ -1024,7 +1052,7 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
     const finished = real.filter(b => b.progress >= 0.995).length;
     const reading = real.filter(b => b.progress > 0.005 && b.progress < 0.995).length;
 
-    $('hello').textContent = greeting();
+    $('hello').textContent = reader ? `${greeting()} · ${reader}` : greeting();
     const chips = $('chips'); chips.replaceChildren();
     const chip = text => { const c = el('span', 'chip'); c.append(paw('', 14), document.createTextNode(text)); chips.append(c); };
     if (real.length) {
@@ -1170,7 +1198,7 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
       }
       onScroll();
     });
-    if (!meta.sample) { meta.lastRead = Date.now(); books.put('meta', meta); }
+    if (!meta.sample) { setMine(meta, meta.progress || 0, Date.now()); books.put('meta', meta); }
   }
 
   /* ---------- progress ---------- */
@@ -1205,7 +1233,7 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
       if (Math.abs(dy) > 8 || y < 60) lastY = y;
     }
     $('toTop').hidden = doc.scrollTop < innerHeight;
-    if (current && !current.meta.sample) { current.meta.progress = r; current.meta.lastRead = Date.now(); saveProgress(); if (current.meta.remote) progressDirty = true; }
+    if (current && !current.meta.sample) { setMine(current.meta, r, Date.now()); saveProgress(); if (current.meta.remote) progressDirty = true; }
   }
   addEventListener('scroll', onScroll, { passive: true });
   addEventListener('pagehide', () => saveProgress(true));
@@ -1877,32 +1905,110 @@ Reply with the transcription only, no notes or commentary.`;
     }
   }
 
-  // reading position, shared between devices (books/progress.enc: { books: { id: { p, at } } })
+  /* ---------- readers: each person keeps their own reading position ----------
+     progress.enc v2: { readers: [names], books: { id: { name: { p, at } } } }  (v1 was { id: { p, at } }) */
+  const READER_KEY = 'mmr.reader', READERS_KEY = 'mmr.readers';
+  let reader = (() => { try { return localStorage.getItem(READER_KEY) || ''; } catch { return ''; } })();
+  // the letter shown in the round badge: Thai leading vowels (เ แ โ ใ ไ) take the next consonant too
+  const initial = n => { const c = [...n]; return /^[\u0E40-\u0E44]/.test(c[0] || '') ? c.slice(0, 2).join('') : (c[0] || '?'); };
+  const perReader = e => !e ? {} : (typeof e.p === 'number' && 'at' in e) ? { '': e } : e;
+  function knownReaders() { try { return JSON.parse(localStorage.getItem(READERS_KEY) || '[]'); } catch { return []; } }
+  function rememberReaders(list) {
+    const all = new Set([...knownReaders(), ...(list || []), ...(reader ? [reader] : [])]);
+    try { localStorage.setItem(READERS_KEY, JSON.stringify([...all])); } catch {}
+  }
+  function setMine(m, p, at) {
+    m.progress = p; m.lastRead = at;
+    if (reader) { m.progressBy = m.progressBy || {}; m.progressBy[reader] = { p, at }; }
+  }
+  // show the chosen reader's positions on the shelf
+  async function applyReader() {
+    for (const m of library) {
+      if (m.sample) continue;
+      if (!m.progressBy && (m.progress || m.lastRead) && reader) m.progressBy = { [reader]: { p: m.progress || 0, at: m.lastRead || 0 } };   // positions saved before readers existed
+      const r = m.progressBy?.[reader];
+      m.progress = r?.p || 0; m.lastRead = r?.at || 0;
+      await books.put('meta', m);
+    }
+  }
+  function showReader() {
+    $('whoInitial').textContent = reader ? initial(reader) : '?';
+    $('whoName').textContent = reader || 'เลือกคนอ่าน';
+    $('whoBtn').title = reader ? `กำลังอ่านในชื่อ ${reader} (กดเพื่อเปลี่ยน)` : 'เลือกคนอ่าน';
+  }
+  function openWho(firstTime) {
+    const list = [...new Set([...knownReaders(), ...(reader ? [reader] : [])])].sort((a, b) => a.localeCompare(b, 'th'));
+    const box = $('whoList'); box.replaceChildren();
+    for (const n of list) {
+      const b = el('button', 'who-chip' + (n === reader ? ' on' : ''));
+      b.type = 'button';
+      b.append(el('span', 'who-dot', initial(n)), el('span', '', n));
+      b.onclick = () => chooseReader(n);
+      box.append(b);
+    }
+    $('whoList').hidden = !list.length;
+    $('whoNew').value = '';
+    $('whoText').textContent = list.length ? 'แตะชื่อตัวเอง หรือเพิ่มชื่อใหม่' : 'ตั้งชื่อคนอ่าน แต่ละคนจะมีหน้าที่อ่านค้างไว้ของตัวเอง';
+    $('whoClose').hidden = !!firstTime && !reader;
+    $('whoModal').hidden = false;
+    (list.length ? box.querySelector('button') : $('whoNew')).focus();
+  }
+  async function chooseReader(name) {
+    name = String(name).replace(/\s+/g, ' ').trim().slice(0, 30);
+    if (!name) return;
+    $('whoModal').hidden = true;
+    if (name === reader) return;
+    if (current) { saveProgress(true); }
+    reader = name;
+    try { localStorage.setItem(READER_KEY, name); } catch {}
+    rememberReaders([name]);
+    await applyReader();
+    showReader();
+    progressDirty = true;
+    await pullProgress();
+    pushProgress();
+    if (!$('libView').hidden) drawLibrary();
+    status(`สวัสดี ${name} 🐾 ตอนนี้อ่านในชื่อ ${name}`);
+  }
+  $('whoBtn').onclick = () => openWho(false);
+  $('whoClose').onclick = () => { $('whoModal').hidden = true; };
+  $('whoForm').addEventListener('submit', e => { e.preventDefault(); chooseReader($('whoNew').value); });
+
+  // reading position, shared between devices (books/progress.enc)
   let progressDirty = false, progressPushing = null, lastProgressPull = 0;
   async function pullProgress() {
     if (!canShare()) return;
     lastProgressPull = Date.now();
     let data;
     try { const buf = await ghRaw('books/progress.enc'); if (!buf) return; data = JSON.parse(new TextDecoder().decode(await unseal(siteKey, buf))); } catch { return; }
+    rememberReaders(data.readers);
+    if (!reader) return;
     let changed = false;
     for (const m of library) {
-      const r = m.remote && data.books?.[m.remote];
-      if (r && r.at > (m.lastRead || 0) && !(current && current.meta.id === m.id)) {
-        m.progress = r.p; m.lastRead = r.at; await books.put('meta', m); changed = true;
-      }
+      if (!m.remote || (current && current.meta.id === m.id)) continue;
+      const e = perReader(data.books?.[m.remote]);
+      const r = e[reader] || (!m.progressBy?.[reader] && e['']);   // '' = position saved before readers existed
+      if (r && r.at > (m.progressBy?.[reader]?.at || 0)) { setMine(m, r.p, r.at); await books.put('meta', m); changed = true; }
     }
     if (changed && !$('libView').hidden) drawLibrary();
   }
   function pushProgress() {
     if (!canShare() || !progressDirty || progressPushing) return progressPushing;
     progressDirty = false;
-    progressPushing = ghUpdateJson('books/progress.enc', () => ({ format: 'reader-progress/1', books: {} }), data => {
+    progressPushing = ghUpdateJson('books/progress.enc', () => ({ format: 'reader-progress/2', readers: [], books: {} }), data => {
+      data.format = 'reader-progress/2';
       data.books = data.books || {};
       let changed = false;
+      const names = new Set(data.readers || []);
+      for (const n of knownReaders()) if (!names.has(n)) { names.add(n); changed = true; }
+      data.readers = [...names].sort((a, b) => a.localeCompare(b, 'th'));
       for (const m of library) {
-        if (!m.remote || !m.lastRead) continue;
-        const r = data.books[m.remote];
-        if (!r || m.lastRead > r.at + 1000) { data.books[m.remote] = { p: Math.round(m.progress * 1e4) / 1e4, at: m.lastRead }; changed = true; }
+        if (!m.remote || !m.progressBy) continue;
+        const e = data.books[m.remote] = perReader(data.books[m.remote]);
+        for (const [rd, v] of Object.entries(m.progressBy)) {
+          if (!rd || !v?.at) continue;
+          if (!e[rd] || v.at > e[rd].at + 1000) { e[rd] = { p: Math.round(v.p * 1e4) / 1e4, at: v.at }; changed = true; }
+        }
       }
       return changed;
     }, 'อัปเดตตำแหน่งที่อ่าน').catch(e => { console.error(e); progressDirty = true; }).finally(() => { progressPushing = null; });
@@ -2070,7 +2176,7 @@ Reply with the transcription only, no notes or commentary.`;
     siteKey = key;
     $('gate').hidden = true; $('libView').hidden = false; $('fab').hidden = false;
     $('ghBtn').hidden = !(siteKey && onWebsite());
-    unlockSharedGh();
+    unlockSharedGh().then(() => $('ghBtn').classList.toggle('shared', !!sharedGh));
     if (started) return;
     started = true;
     start();
@@ -2097,7 +2203,9 @@ Reply with the transcription only, no notes or commentary.`;
     drawLibrary();
     await unlockSharedGh();
     await syncRemoteShelf();
-    pullProgress();
+    await applyReader(); showReader(); drawLibrary();
+    await pullProgress();
+    if (!reader) openWho(true);
   }
 })();
 </script>
