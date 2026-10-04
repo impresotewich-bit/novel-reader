@@ -1,17 +1,19 @@
-// thai-ocr.swift — turn scanned PDF books into text for ห้องอ่านหนังสือ, entirely on this Mac.
+// thai-ocr.swift — turn scanned PDF books into text for Meaw Meaw Read, entirely on this Mac.
 //
 // Uses Apple's built-in Vision text recognition (the engine behind Live Text), which reads Thai
 // well, works offline, costs nothing and never touches claude.ai.
 //
-// Usage:  thai-ocr <file.pdf | folder> [output-folder]     convert PDFs
-//         thai-ocr --index <books-folder>                  rebuild <books-folder>/index.json for the web shelf
-// Output: <name>.book.json (+ <name>.cover.jpg) for each PDF — the reader loads these from GitHub Pages,
-//         or add a .book.json by hand with “เพิ่มหนังสือ”.
+// Usage:  thai-ocr <file.pdf | folder> [output-folder]     convert PDFs to <name>.book.json (+ <name>.cover.jpg)
+//         thai-ocr --seal <library> <books> <vault.json>   encrypt the library for the public website
+//         thai-ocr --vault <vault.json> <index.html>       new password: new salt + check value
+// The password comes from the NOVEL_PASSWORD environment variable (the novel CLI reads it from the Keychain).
 
 import Foundation
 import PDFKit
 import Vision
 import AppKit
+import CryptoKit
+import CommonCrypto
 
 struct Line { let text: String; let minX: Double; let maxX: Double; let top: Double; let height: Double }
 
@@ -131,29 +133,116 @@ func convert(_ url: URL, into outDir: URL) throws {
     print("  ✓ บันทึกแล้ว: \(out.path)")
 }
 
-/// books/index.json: the shelf the web reader shows (no page text, so it stays small)
-func writeIndex(_ dir: URL) throws {
-    let files = ((try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? [])
+// ---- encryption for the public website ----
+// Books are published only as AES-256-GCM ciphertext. The key comes from the site password with
+// PBKDF2-SHA256 (salt + rounds in tools/vault.json, also embedded in index.html); the browser derives
+// the same key with WebCrypto. File format: 12-byte nonce || ciphertext || 16-byte tag.
+
+let vaultCheckText = "meaw meaw read"
+
+func password() -> String {
+    guard let pw = ProcessInfo.processInfo.environment["NOVEL_PASSWORD"], !pw.isEmpty else {
+        print("✗ ไม่พบรหัสเว็บ ตั้งรหัสด้วย ./novel password"); exit(1)
+    }
+    return pw
+}
+
+func deriveKey(_ pw: String, salt: Data, rounds: Int) -> SymmetricKey {
+    var out = [UInt8](repeating: 0, count: 32)
+    let pwBytes = Array(pw.utf8)
+    _ = salt.withUnsafeBytes { s in
+        CCKeyDerivationPBKDF(CCPBKDFAlgorithm(kCCPBKDF2), pw, pwBytes.count,
+                             s.bindMemory(to: UInt8.self).baseAddress, salt.count,
+                             CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256), UInt32(rounds), &out, out.count)
+    }
+    return SymmetricKey(data: out)
+}
+
+func seal(_ data: Data, _ key: SymmetricKey) throws -> Data { try AES.GCM.seal(data, using: key).combined! }
+
+struct Vault { let salt: Data; let rounds: Int; let check: Data }
+
+func readVault(_ url: URL) throws -> Vault {
+    let obj = try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any] ?? [:]
+    guard let s = obj["salt"] as? String, let salt = Data(base64Encoded: s), let rounds = obj["rounds"] as? Int,
+          let c = obj["check"] as? String, let check = Data(base64Encoded: c) else {
+        throw NSError(domain: "vault", code: 1, userInfo: [NSLocalizedDescriptionKey: "อ่าน \(url.lastPathComponent) ไม่ได้"])
+    }
+    return Vault(salt: salt, rounds: rounds, check: check)
+}
+
+/// New salt + check value for a (new) password; writes vault.json and the VAULT constant in index.html.
+func makeVault(_ vaultURL: URL, page: URL) throws {
+    var salt = Data(count: 16)
+    _ = salt.withUnsafeMutableBytes { SecRandomCopyBytes(kSecRandomDefault, 16, $0.baseAddress!) }
+    let rounds = 310_000
+    let key = deriveKey(password(), salt: salt, rounds: rounds)
+    let check = try seal(Data(vaultCheckText.utf8), key)
+    let json = "{\"salt\":\"\(salt.base64EncodedString())\",\"rounds\":\(rounds),\"check\":\"\(check.base64EncodedString())\"}"
+    try Data((json + "\n").utf8).write(to: vaultURL)
+    var html = try String(contentsOf: page, encoding: .utf8)
+    guard let a = html.range(of: "/*VAULT*/"), let b = html.range(of: "/*END VAULT*/", range: a.upperBound..<html.endIndex) else {
+        throw NSError(domain: "vault", code: 2, userInfo: [NSLocalizedDescriptionKey: "ไม่พบ /*VAULT*/ ใน index.html"])
+    }
+    html.replaceSubrange(a.upperBound..<b.lowerBound, with: json)
+    try html.write(to: page, atomically: true, encoding: .utf8)
+    print("✓ ตั้งรหัสใหม่แล้ว")
+}
+
+func opaqueName(_ s: String) -> String {
+    SHA256.hash(data: Data(s.utf8)).prefix(8).map { String(format: "%02x", $0) }.joined()
+}
+
+/// Encrypt every library/<name>.book.json (+ cover) into books/<id>.book.enc and books/index.enc.
+func sealLibrary(_ lib: URL, into out: URL, vaultURL: URL) throws {
+    let v = try readVault(vaultURL)
+    let key = deriveKey(password(), salt: v.salt, rounds: v.rounds)
+    // refuse to publish with a password that doesn't match the website's
+    guard (try? AES.GCM.open(AES.GCM.SealedBox(combined: v.check), using: key)) == Data(vaultCheckText.utf8) else {
+        print("✗ รหัสในเครื่องไม่ตรงกับรหัสเว็บ ตั้งใหม่ด้วย ./novel password"); exit(1)
+    }
+    let fm = FileManager.default
+    try fm.createDirectory(at: out, withIntermediateDirectories: true)
+    let files = ((try? fm.contentsOfDirectory(at: lib, includingPropertiesForKeys: nil)) ?? [])
         .filter { $0.lastPathComponent.hasSuffix(".book.json") }.sorted { $0.lastPathComponent < $1.lastPathComponent }
     var entries: [[String: Any]] = []
+    var keep = Set(["index.enc"])
     for f in files {
-        guard let obj = try? JSONSerialization.jsonObject(with: Data(contentsOf: f)) as? [String: Any] else { continue }
+        let raw = try Data(contentsOf: f)
+        guard let obj = try JSONSerialization.jsonObject(with: raw) as? [String: Any] else { continue }
         let name = String(f.lastPathComponent.dropLast(".book.json".count))
-        var e: [String: Any] = ["file": f.lastPathComponent, "title": obj["title"] as? String ?? name,
+        let id = opaqueName(name)
+        try seal(raw, key).write(to: out.appendingPathComponent(id + ".book.enc")); keep.insert(id + ".book.enc")
+        var e: [String: Any] = ["id": id, "title": obj["title"] as? String ?? name, "source": obj["source"] as? String ?? "",
                                 "numPages": obj["numPages"] as? Int ?? 0, "updated": obj["updated"] as? String ?? ""]
-        if FileManager.default.fileExists(atPath: dir.appendingPathComponent(name + ".cover.jpg").path) { e["cover"] = name + ".cover.jpg" }
+        let cover = lib.appendingPathComponent(name + ".cover.jpg")
+        if let c = try? Data(contentsOf: cover) {
+            try seal(c, key).write(to: out.appendingPathComponent(id + ".cover.enc")); keep.insert(id + ".cover.enc"); e["cover"] = true
+        }
         entries.append(e)
     }
-    let data = try JSONSerialization.data(withJSONObject: ["format": "reader-shelf/1", "books": entries], options: [.withoutEscapingSlashes, .prettyPrinted])
-    try data.write(to: dir.appendingPathComponent("index.json"))
-    print("ชั้นหนังสือบนเว็บมี \(entries.count) เล่ม")
+    let index = try JSONSerialization.data(withJSONObject: ["format": "reader-shelf/2", "books": entries], options: [.withoutEscapingSlashes])
+    try seal(index, key).write(to: out.appendingPathComponent("index.enc"))
+    for f in (try? fm.contentsOfDirectory(at: out, includingPropertiesForKeys: nil)) ?? [] where !keep.contains(f.lastPathComponent) {
+        try? fm.removeItem(at: f)   // books removed from the library, or old unencrypted files
+    }
+    print("ชั้นหนังสือบนเว็บมี \(entries.count) เล่ม (เข้ารหัสแล้ว)")
 }
 
 // ---- main ----
 let args = CommandLine.arguments.dropFirst()
-if args.first == "--index" {
-    let dir = URL(fileURLWithPath: args.dropFirst().first ?? "books")
-    do { try writeIndex(dir) } catch { print("✗ \(error.localizedDescription)"); exit(1) }
+if args.first == "--seal" {   // --seal <library> <books> <vault.json>
+    let a = Array(args.dropFirst())
+    guard a.count == 3 else { print("วิธีใช้: thai-ocr --seal <library> <books> <vault.json>"); exit(1) }
+    do { try sealLibrary(URL(fileURLWithPath: a[0]), into: URL(fileURLWithPath: a[1]), vaultURL: URL(fileURLWithPath: a[2])) }
+    catch { print("✗ \(error.localizedDescription)"); exit(1) }
+    exit(0)
+}
+if args.first == "--vault" {  // --vault <vault.json> <index.html>
+    let a = Array(args.dropFirst())
+    guard a.count == 2 else { print("วิธีใช้: thai-ocr --vault <vault.json> <index.html>"); exit(1) }
+    do { try makeVault(URL(fileURLWithPath: a[0]), page: URL(fileURLWithPath: a[1])) }
+    catch { print("✗ \(error.localizedDescription)"); exit(1) }
     exit(0)
 }
 guard let input = args.first else {

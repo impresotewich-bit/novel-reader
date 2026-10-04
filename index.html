@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>ห้องอ่านหนังสือ</title>
+<title>Meaw Meaw Read</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,400;0,600;1,400&family=Noto+Serif+Thai:wght@400;600;700&family=Anuphan:wght@400;500;600&family=Mali:wght@500;600;700&display=swap">
@@ -93,6 +93,28 @@ button:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visi
 .btn-primary:hover { filter: brightness(1.08); }
 .btn-ghost { background: transparent; border-color: transparent; }
 .btn-ghost:hover { background: var(--accent-soft); border-color: transparent; }
+
+/* ================= PASSWORD GATE ================= */
+.gate { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; }
+.gate-card {
+  width: min(100%, 23rem); background: var(--surface); border: 1px solid var(--line); border-radius: 28px;
+  padding: 28px 24px 24px; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;
+}
+.gate-card .cat-spot { width: 150px; height: 150px; margin-bottom: 4px; }
+.gate-card h1 { font-family: var(--font-display); font-weight: 700; font-size: 30px; margin: 0; color: var(--accent-ink); }
+.gate-card p { margin: 0; color: var(--muted); }
+.gate-card input[type=password] {
+  width: 100%; font: inherit; font-size: 17px; text-align: center; color: var(--fg); background: var(--bg);
+  border: 1.5px solid var(--line); border-radius: 999px; padding: 12px 16px; margin-top: 6px;
+}
+.gate-card input[type=password]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.gate-card .btn-cute { width: 100%; justify-content: center; font-size: 16px; padding: 12px; }
+.gate-remember { font-size: 13.5px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.gate-remember input { accent-color: var(--accent); }
+.gate-error { color: var(--danger) !important; font-size: 14px; }
+.gate-card.shake { animation: shake .35s; }
+@keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+.top-actions { display: flex; gap: 8px; }
 
 /* ================= LIBRARY ================= */
 .lib { max-width: 72rem; margin: 0 auto; padding: 20px 16px 96px; display: flex; flex-direction: column; gap: 36px; }
@@ -385,16 +407,35 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
 </style>
 
 <!-- ================= LIBRARY VIEW ================= -->
-<section class="lib" id="libView">
+<section class="gate" id="gate">
+  <form class="gate-card" id="gateForm" autocomplete="on">
+    <div class="cat-spot"><img src="assets/cat-sit.webp" alt="ลูกแมวสามสีใส่แว่นถือหนังสือ"></div>
+    <h1>Meaw Meaw Read</h1>
+    <p>ใส่รหัสเพื่อเข้าห้องอ่านนะ</p>
+    <input type="text" name="username" value="meaw-meaw-read" autocomplete="username" hidden>
+    <input type="password" id="gatePw" name="password" autocomplete="current-password" placeholder="รหัสผ่าน" aria-label="รหัสผ่าน" required>
+    <label class="gate-remember"><input type="checkbox" id="gateRemember" checked> จำไว้ในเครื่องนี้</label>
+    <button type="submit" class="btn-cute" id="gateBtn">เข้าห้องอ่าน</button>
+    <p class="gate-error" id="gateError" role="alert" hidden></p>
+  </form>
+</section>
+
+<section class="lib" id="libView" hidden>
   <div class="topline">
     <span class="brand">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="12" cy="16" rx="5.2" ry="4.3"/><ellipse cx="5.6" cy="10.4" rx="2.1" ry="2.6"/><ellipse cx="9.4" cy="6.4" rx="2.1" ry="2.7"/><ellipse cx="14.6" cy="6.4" rx="2.1" ry="2.7"/><ellipse cx="18.4" cy="10.4" rx="2.1" ry="2.6"/></svg>
-      ห้องอ่านหนังสือ
+      Meaw Meaw Read
     </span>
-    <button class="btn-soft" id="libMode" title="สลับโหมดสี" aria-label="สลับโหมดสี">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg>
-      <span id="libModeName">สว่าง</span>
-    </button>
+    <div class="top-actions">
+      <button class="btn-soft" id="libMode" title="สลับโหมดสี" aria-label="สลับโหมดสี">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg>
+        <span id="libModeName">สว่าง</span>
+      </button>
+      <button class="btn-soft" id="lockBtn" title="ล็อกเว็บ ต้องใส่รหัสใหม่ครั้งหน้า" aria-label="ล็อกเว็บ">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+        <span class="btn-label">ล็อก</span>
+      </button>
+    </div>
   </div>
 
   <header class="hero">
@@ -874,7 +915,7 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
     saveProgress(true);
     current = null;
     $('readerView').hidden = true; $('libView').hidden = false;
-    document.title = 'ห้องอ่านหนังสือ';
+    document.title = 'Meaw Meaw Read';
     drawLibrary();
     window.scrollTo(0, 0);
   }
@@ -916,7 +957,7 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
     page.append(frag);
     $('bookTitle').textContent = meta.title;
     updateReaderMeta(meta, pages);
-    document.title = meta.title + ' · ห้องอ่านหนังสือ';
+    document.title = meta.title + ' · Meaw Meaw Read';
   }
 
   async function openBook(id) {
@@ -1297,28 +1338,91 @@ Reply with the transcription only, no notes or commentary.`;
   addEventListener('dragover', e => e.preventDefault());
   addEventListener('drop', e => { e.preventDefault(); dragDepth = 0; $('drop').hidden = true; addFiles(e.dataTransfer.files); });
 
-  /* ---------- shelf from GitHub (books/ next to this page, written by ./novel) ---------- */
-  const bookUrl = f => 'books/' + encodeURIComponent(f);
+  /* ---------- password + encrypted shelf ----------
+     ./novel publishes books/ as AES-256-GCM files (nonce || ciphertext || tag). The key is derived from the
+     site password with PBKDF2-SHA256 using VAULT below (written by `./novel password`). */
+  const VAULT = /*VAULT*/{"salt":"yR/Iun+zC5DdmNHaekW07g==","rounds":310000,"check":"0GMmrcCWmYzfCb+fAI2q/J9vwtHRw2RyqcHmiueu9iH5Y0SWNQhOPsFy"}/*END VAULT*/;
+  const CHECK_TEXT = 'meaw meaw read';
+  const KEY_STORE = 'mmr.key';
+  let siteKey = null;
+  const b64dec = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  const b64enc = u => btoa(String.fromCharCode(...new Uint8Array(u)));
+  async function deriveSiteKey(pw) {
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64dec(VAULT.salt), iterations: VAULT.rounds, hash: 'SHA-256' },
+      base, { name: 'AES-GCM', length: 256 }, true, ['decrypt']);
+  }
+  async function unseal(key, buf) {
+    const u = new Uint8Array(buf);
+    return crypto.subtle.decrypt({ name: 'AES-GCM', iv: u.slice(0, 12) }, key, u.slice(12));
+  }
+  async function keyWorks(key) {
+    try { return new TextDecoder().decode(await unseal(key, b64dec(VAULT.check))) === CHECK_TEXT; } catch { return false; }
+  }
+  function storedKey() {
+    for (const st of [sessionStorage, localStorage]) { try { const v = st.getItem(KEY_STORE); if (v) return v; } catch {} }
+    return null;
+  }
+  async function tryStoredKey() {
+    const raw = storedKey();
+    if (!raw) return null;
+    try {
+      const key = await crypto.subtle.importKey('raw', b64dec(raw), { name: 'AES-GCM' }, true, ['decrypt']);
+      return (await keyWorks(key)) ? key : null;
+    } catch { return null; }
+  }
+  $('gateForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const pw = $('gatePw').value;
+    $('gateBtn').disabled = true; $('gateBtn').textContent = 'กำลังเปิดประตู…'; $('gateError').hidden = true;
+    let key = null;
+    try { key = await deriveSiteKey(pw); } catch {}
+    if (key && await keyWorks(key)) {
+      const raw = b64enc(await crypto.subtle.exportKey('raw', key));
+      try { ($('gateRemember').checked ? localStorage : sessionStorage).setItem(KEY_STORE, raw); } catch {}
+      unlock(key);
+    } else {
+      $('gateError').textContent = 'รหัสไม่ถูกต้อง ลองอีกครั้งนะ';
+      $('gateError').hidden = false;
+      const card = $('gateForm'); card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+      $('gatePw').select();
+    }
+    $('gateBtn').disabled = false; $('gateBtn').textContent = 'เข้าห้องอ่าน';
+  });
+  $('lockBtn').onclick = () => {
+    for (const st of [sessionStorage, localStorage]) { try { st.removeItem(KEY_STORE); } catch {} }
+    location.reload();
+  };
+
+  const toDataUrl = buf => new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(new Blob([buf], { type: 'image/jpeg' })); });
+  async function fetchSealed(path) {
+    const r = await fetch(path, { cache: 'no-cache' });
+    if (!r.ok) throw new Error(r.status);
+    return unseal(siteKey, await r.arrayBuffer());
+  }
   async function syncRemoteShelf() {
-    if (!/^https?:$/.test(location.protocol)) return;
+    if (!siteKey || !/^https?:$/.test(location.protocol)) return;
     let idx;
-    try { const r = await fetch('books/index.json', { cache: 'no-cache' }); if (!r.ok) return; idx = await r.json(); } catch { return; }
-    if (idx?.format !== 'reader-shelf/1' || !Array.isArray(idx.books)) return;
+    try { idx = JSON.parse(new TextDecoder().decode(await fetchSealed('books/index.enc'))); } catch { return; }
+    if (idx?.format !== 'reader-shelf/2' || !Array.isArray(idx.books)) return;
     const seen = new Set();
     for (const e of idx.books) {
-      if (!e?.file) continue;
-      const id = 'repo:' + e.file; seen.add(id);
-      const cover = e.cover ? bookUrl(e.cover) : null;
+      if (!e?.id) continue;
+      const id = 'repo:' + e.id; seen.add(id);
       let m = library.find(b => b.id === id);
+      const fresh = !m || m.version !== e.updated;
       if (!m) {
-        m = { id, key: id, remote: e.file, title: e.title || e.file, cover, pdfCover: cover, customCover: false,
-              numPages: e.numPages || 0, added: Date.parse(e.updated) || Date.now(), lastRead: 0, progress: 0, version: e.updated };
+        m = { id, key: 'repo:' + (e.source || e.id), remote: e.id, title: e.title || e.id, cover: null, pdfCover: null, customCover: false,
+              numPages: e.numPages || 0, added: Date.parse(e.updated) || Date.now(), lastRead: 0, progress: 0 };
         library.push(m);
-      } else {
-        if (m.version !== e.updated) { m.version = e.updated; await books.del('text', id); }   // re-scanned: fetch fresh text
-        m.title = e.title || m.title; m.numPages = e.numPages || m.numPages;
-        m.pdfCover = cover; if (!m.customCover) m.cover = cover;
       }
+      if (fresh) {
+        await books.del('text', id);   // new or re-scanned: fetch fresh text when opened
+        if (e.cover) { try { m.pdfCover = await toDataUrl(await fetchSealed(`books/${e.id}.cover.enc`)); } catch {} }
+        if (!m.customCover) m.cover = m.pdfCover;
+        m.version = e.updated;
+      }
+      m.title = e.title || m.title; m.numPages = e.numPages || m.numPages;
       await books.put('meta', m);
     }
     for (const b of [...library]) if (b.remote && !seen.has(b.id)) {
@@ -1330,9 +1434,7 @@ Reply with the transcription only, no notes or commentary.`;
   async function fetchRemoteBook(meta) {
     status('กำลังโหลดหนังสือ…', true);
     try {
-      const r = await fetch(bookUrl(meta.remote));
-      if (!r.ok) throw new Error(r.status);
-      const b = await r.json();
+      const b = JSON.parse(new TextDecoder().decode(await fetchSealed(`books/${meta.remote}.book.enc`)));
       const pages = (b.pages || []).map(p => Array.isArray(p) ? p.map(x => String(x).trim()).filter(Boolean) : []);
       const t = { id: meta.id, pages };
       await books.put('text', t);
@@ -1343,8 +1445,21 @@ Reply with the transcription only, no notes or commentary.`;
 
   /* ---------- start ---------- */
   apply();
-  drawLibrary();
+  let started = false;
+  function unlock(key) {
+    siteKey = key;
+    $('gate').hidden = true; $('libView').hidden = false;
+    if (started) return;
+    started = true;
+    start();
+  }
   (async () => {
+    if (!VAULT.salt) return unlock(null);   // no password set up yet
+    const key = await tryStoredKey();
+    if (key) unlock(key); else $('gatePw').focus();
+  })();
+  async function start() {
+    drawLibrary();
     if (!(await dbp)) status('เบราว์เซอร์นี้ไม่อนุญาตให้เก็บข้อมูล หนังสือที่เพิ่มจะหายเมื่อปิดหน้า');
     try { library = (await books.all()) || []; } catch { library = []; }
     for (const b of library) if (b.ocr && (b.ocr.state === 'running' || b.ocr.state === 'queued')) { b.ocr.state = 'paused'; b.ocr.msg = ''; books.put('meta', b); }
@@ -1359,6 +1474,6 @@ Reply with the transcription only, no notes or commentary.`;
     }
     drawLibrary();
     syncRemoteShelf();
-  })();
+  }
 })();
 </script>

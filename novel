@@ -1,22 +1,27 @@
 #!/bin/zsh
-# novel — ห้องอ่านหนังสือ command line
+# novel — Meaw Meaw Read command line
 #
-#   ./novel scan [ไฟล์.pdf … | โฟลเดอร์]   แปลง PDF (ภาพสแกนหรือไม่ก็ได้) เป็นหนังสือใน books/ แล้วขึ้น GitHub
+#   ./novel scan [ไฟล์.pdf … | โฟลเดอร์]   แปลง PDF (ภาพสแกนหรือไม่ก็ได้) เป็นหนังสือ แล้วขึ้น GitHub
 #                                         ไม่ระบุไฟล์ = แปลงทุกไฟล์ในโฟลเดอร์ "สแกน"
 #   ./novel list                          ดูหนังสือบนชั้น
 #   ./novel remove <ชื่อหนังสือ>            เอาเล่มออกจากชั้น แล้วขึ้น GitHub
 #   ./novel push                          ส่งการเปลี่ยนแปลงทั้งหมดขึ้น GitHub
-#   ./novel open                          เปิดหน้าเว็บชั้นหนังสือ (GitHub Pages)
+#   ./novel password                      เปลี่ยนรหัสเข้าเว็บ (เข้ารหัสหนังสือทุกเล่มใหม่)
+#   ./novel open                          เปิดหน้าเว็บ
 #
-# ตั้ง NOVEL_NO_PUSH=1 ถ้าไม่อยากให้ขึ้น GitHub อัตโนมัติ
+# หนังสือที่อ่านได้อยู่ใน library/ บนเครื่องนี้เท่านั้น ที่ขึ้น GitHub (books/) เป็นไฟล์เข้ารหัสด้วยรหัสเว็บ
+# รหัสเก็บใน Keychain ของ Mac  ·  ตั้ง NOVEL_NO_PUSH=1 ถ้าไม่อยากให้ขึ้น GitHub อัตโนมัติ
 # การแปลงทำบนเครื่องนี้ทั้งหมดด้วย Apple Vision — ฟรี ไม่ใช้ claude.ai
 
 set -e
 ROOT="${0:A:h}"
 cd "$ROOT"
 BIN="tools/.bin/thai-ocr"
-BOOKS="books"
-mkdir -p "$BOOKS" "สแกน" "tools/.bin"
+LIB="library"      # readable books, never pushed
+BOOKS="books"      # encrypted copies for the website
+VAULT="tools/vault.json"
+KEYCHAIN=(-s meaw-meaw-read -a novel)
+mkdir -p "$LIB" "$BOOKS" "สแกน" "tools/.bin"
 
 build() {
   if [[ ! -x "$BIN" || "tools/thai-ocr.swift" -nt "$BIN" ]]; then
@@ -26,8 +31,13 @@ build() {
   fi
 }
 
+site_password() {
+  security find-generic-password $KEYCHAIN -w 2>/dev/null || {
+    echo "ยังไม่ได้ตั้งรหัสเว็บในเครื่องนี้ — ตั้งด้วย ./novel password" >&2; exit 1; }
+}
+
 publish() {   # publish "<commit message>"
-  "$BIN" --index "$BOOKS" >/dev/null
+  NOVEL_PASSWORD="$(site_password)" "$BIN" --seal "$LIB" "$BOOKS" "$VAULT"
   if [[ -n "$NOVEL_NO_PUSH" ]]; then echo "ข้ามการขึ้น GitHub (NOVEL_NO_PUSH)"; return; fi
   if ! git rev-parse --git-dir >/dev/null 2>&1; then echo "โฟลเดอร์นี้ยังไม่ได้เชื่อม GitHub" >&2; return; fi
   git add -A
@@ -45,30 +55,41 @@ case "$cmd" in
     titles=()
     for src in "$@"; do
       if [[ -d "$src" && -z "$(ls "$src"/*.(pdf|PDF)(N) 2>/dev/null)" ]]; then echo "ไม่มีไฟล์ PDF ใน $src"; continue; fi
-      "$BIN" "$src" "$BOOKS"
+      "$BIN" "$src" "$LIB"
       if [[ -d "$src" ]]; then for f in "$src"/*.(pdf|PDF)(N); do titles+=("${f:t:r}"); done; else titles+=("${src:t:r}"); fi
     done
     (( ${#titles} )) && publish "เพิ่มหนังสือ: ${(j:, :)titles}"
     ;;
   list|ls)
-    build; "$BIN" --index "$BOOKS"
-    for f in "$BOOKS"/*.book.json(N); do echo "  • ${${f:t}%.book.json}"; done
+    n=0
+    for f in "$LIB"/*.book.json(N); do echo "  • ${${f:t}%.book.json}"; n=$((n+1)); done
+    echo "รวม $n เล่ม"
     ;;
   remove|rm)
     [[ -z "$1" ]] && { echo "ระบุชื่อหนังสือ เช่น ./novel remove \"ชื่อเรื่อง\""; exit 1; }
     build
-    [[ -f "$BOOKS/$1.book.json" ]] || { echo "ไม่พบ \"$1\" บนชั้น (ดูรายชื่อด้วย ./novel list)"; exit 1; }
-    rm -f "$BOOKS/$1.book.json" "$BOOKS/$1.cover.jpg"
+    [[ -f "$LIB/$1.book.json" ]] || { echo "ไม่พบ \"$1\" บนชั้น (ดูรายชื่อด้วย ./novel list)"; exit 1; }
+    rm -f "$LIB/$1.book.json" "$LIB/$1.cover.jpg"
     publish "เอาออกจากชั้น: $1"
     ;;
   push)
     build; publish "อัปเดตชั้นหนังสือ"
+    ;;
+  password|รหัส)
+    build
+    read -rs "pw1?รหัสใหม่: "; echo
+    read -rs "pw2?พิมพ์รหัสอีกครั้ง: "; echo
+    [[ -z "$pw1" ]] && { echo "รหัสว่างไม่ได้"; exit 1; }
+    [[ "$pw1" != "$pw2" ]] && { echo "รหัสสองครั้งไม่ตรงกัน"; exit 1; }
+    security add-generic-password -U $KEYCHAIN -l "Meaw Meaw Read" -w "$pw1"
+    NOVEL_PASSWORD="$pw1" "$BIN" --vault "$VAULT" index.html
+    publish "เปลี่ยนรหัสเว็บ"
     ;;
   open)
     url=$(gh api "repos/{owner}/{repo}/pages" --jq .html_url 2>/dev/null) || true
     if [[ -n "$url" ]]; then open "$url"; else echo "ยังไม่ได้เปิด GitHub Pages — เปิดไฟล์ index.html ในเครื่องแทน"; open index.html; fi
     ;;
   *)
-    sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'
     ;;
 esac

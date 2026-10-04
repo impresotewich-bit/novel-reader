@@ -9,3 +9,5 @@ tools/.bin/
 Calico Kitten*.png
 ChatGPT Image*.png
 .DS_Store
+
+library/
