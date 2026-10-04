@@ -42,9 +42,10 @@ sync_down() {  # get books other devices added on the website
   git pull -q --rebase --autostash 2>/dev/null || echo "ดึงข้อมูลล่าสุดจาก GitHub ไม่ได้ (ทำต่อด้วยข้อมูลในเครื่อง)" >&2
 }
 
-publish() {   # publish "<commit message>"
+publish() {   # publish "<commit message>" [name of a book being removed]
   sync_down
-  NOVEL_PASSWORD="$(site_password)" "$BIN" --seal "$LIB" "$BOOKS" "$VAULT"
+  local extra=(); [[ -n "$2" ]] && extra=(--drop "$2")
+  NOVEL_PASSWORD="$(site_password)" "$BIN" --seal "$LIB" "$BOOKS" "$VAULT" "${extra[@]}"
   if [[ -n "$NOVEL_NO_PUSH" ]]; then echo "ข้ามการขึ้น GitHub (NOVEL_NO_PUSH)"; return; fi
   if ! git rev-parse --git-dir >/dev/null 2>&1; then echo "โฟลเดอร์นี้ยังไม่ได้เชื่อม GitHub" >&2; return; fi
   git add -A
@@ -77,9 +78,11 @@ case "$cmd" in
   remove|rm)
     [[ -z "$1" ]] && { echo "ระบุชื่อหนังสือ เช่น ./novel remove \"ชื่อเรื่อง\""; exit 1; }
     build
+    sync_down
+    NOVEL_PASSWORD="$(site_password)" "$BIN" --seal "$LIB" "$BOOKS" "$VAULT" >/dev/null   # pick up books added on the web
     [[ -f "$LIB/$1.book.json" ]] || { echo "ไม่พบ \"$1\" บนชั้น (ดูรายชื่อด้วย ./novel list)"; exit 1; }
     rm -f "$LIB/$1.book.json" "$LIB/$1.cover.jpg"
-    publish "เอาออกจากชั้น: $1"
+    publish "เอาออกจากชั้น: $1" "$1"
     ;;
   push)
     build; publish "อัปเดตชั้นหนังสือ"

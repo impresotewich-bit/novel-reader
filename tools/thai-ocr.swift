@@ -202,7 +202,7 @@ func opaqueName(_ s: String) -> String {
 }
 
 /// Encrypt every library/<name>.book.json (+ cover) into books/<id>.book.enc and books/index.enc.
-func sealLibrary(_ lib: URL, into out: URL, vaultURL: URL) throws {
+func sealLibrary(_ lib: URL, into out: URL, vaultURL: URL, drop: String? = nil) throws {
     let v = try readVault(vaultURL)
     let key = deriveKey(password(), salt: v.salt, rounds: v.rounds)
     // refuse to publish with a password that doesn't match the website's
@@ -212,7 +212,7 @@ func sealLibrary(_ lib: URL, into out: URL, vaultURL: URL) throws {
     let fm = FileManager.default
     try fm.createDirectory(at: out, withIntermediateDirectories: true)
     try fm.createDirectory(at: lib, withIntermediateDirectories: true)
-    try adoptWebBooks(lib, from: out, key: key)
+    try adoptWebBooks(lib, from: out, key: key, skip: drop.map(opaqueName))
     let files = ((try? fm.contentsOfDirectory(at: lib, includingPropertiesForKeys: nil)) ?? [])
         .filter { $0.lastPathComponent.hasSuffix(".book.json") }.sorted { $0.lastPathComponent < $1.lastPathComponent }
     var entries: [[String: Any]] = []
@@ -241,7 +241,7 @@ func sealLibrary(_ lib: URL, into out: URL, vaultURL: URL) throws {
 
 /// Books uploaded from the website are only in books/ (encrypted). Copy them into library/ so they
 /// survive the next seal, which rebuilds books/ from library/.
-func adoptWebBooks(_ lib: URL, from out: URL, key: SymmetricKey) throws {
+func adoptWebBooks(_ lib: URL, from out: URL, key: SymmetricKey, skip: String? = nil) throws {
     let fm = FileManager.default
     guard let sealed = try? Data(contentsOf: out.appendingPathComponent("index.enc")),
           let plain = try? AES.GCM.open(AES.GCM.SealedBox(combined: sealed), using: key),
@@ -251,7 +251,7 @@ func adoptWebBooks(_ lib: URL, from out: URL, key: SymmetricKey) throws {
         .filter { $0.lastPathComponent.hasSuffix(".book.json") }
         .map { opaqueName(String($0.lastPathComponent.dropLast(".book.json".count))) })
     for e in entries {
-        guard let id = e["id"] as? String, !local.contains(id),
+        guard let id = e["id"] as? String, !local.contains(id), id != skip,
               let name = (e["name"] as? String)?.replacingOccurrences(of: "/", with: "-"), opaqueName(name) == id,
               let bookData = try? Data(contentsOf: out.appendingPathComponent(id + ".book.enc")),
               let book = try? AES.GCM.open(AES.GCM.SealedBox(combined: bookData), using: key) else { continue }
@@ -266,10 +266,10 @@ func adoptWebBooks(_ lib: URL, from out: URL, key: SymmetricKey) throws {
 
 // ---- main ----
 let args = CommandLine.arguments.dropFirst()
-if args.first == "--seal" {   // --seal <library> <books> <vault.json>
+if args.first == "--seal" {   // --seal <library> <books> <vault.json> [--drop <name>]
     let a = Array(args.dropFirst())
-    guard a.count == 3 else { print("วิธีใช้: thai-ocr --seal <library> <books> <vault.json>"); exit(1) }
-    do { try sealLibrary(URL(fileURLWithPath: a[0]), into: URL(fileURLWithPath: a[1]), vaultURL: URL(fileURLWithPath: a[2])) }
+    guard a.count == 3 || (a.count == 5 && a[3] == "--drop") else { print("วิธีใช้: thai-ocr --seal <library> <books> <vault.json> [--drop <ชื่อ>]"); exit(1) }
+    do { try sealLibrary(URL(fileURLWithPath: a[0]), into: URL(fileURLWithPath: a[1]), vaultURL: URL(fileURLWithPath: a[2]), drop: a.count == 5 ? a[4] : nil) }
     catch { print("✗ \(error.localizedDescription)"); exit(1) }
     exit(0)
 }
