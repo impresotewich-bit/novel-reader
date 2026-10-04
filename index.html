@@ -150,7 +150,7 @@ button:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visi
 .hello { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
 .hero h1 {
   font-family: var(--font-display); font-weight: 700; font-size: clamp(28px, 4.4vw, 44px);
-  line-height: 1.35; margin: 0; text-wrap: balance; color: var(--fg);
+  line-height: 1.7; margin: 0; padding-block: .1em; text-wrap: balance; color: var(--fg);   /* room for Thai tone marks above and vowels below */
 }
 .hero h1 em { font-style: normal; color: var(--accent-ink); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -466,7 +466,7 @@ select { font: inherit; color: var(--fg); background: var(--surface); border: 1p
   .hero-photo img { object-position: 50% 32%; }
   .hero-text { padding: 16px 18px 20px; gap: 10px; }
   .hello { font-size: 13px; }
-  .hero h1 { font-size: 25px; line-height: 1.35; }
+  .hero h1 { font-size: 25px; line-height: 1.7; }
   .hero h1 br { display: none; }
   .chip { font-size: 12.5px; padding: 5px 10px; }
   .hero-actions .btn-cute { width: 100%; justify-content: center; min-height: 48px; font-size: 16px; }
